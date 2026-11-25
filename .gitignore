@@ -1,0 +1,19 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+.python/
+*.egg-info/
+
+# Модели, данные, кэш
+models/
+data/
+logs/
+.cache/
+.tools/
+out/
+
+# ОС и редакторы
+.DS_Store
+.idea/
+.vscode/

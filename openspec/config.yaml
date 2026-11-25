@@ -1,0 +1,47 @@
+schema: taxmonitor
+
+context: |
+  Language: ru
+  All artifacts must be written in ru.
+  Keep OpenSpec structural headings and SHALL/MUST keywords in English.
+
+  Personal project, outside work scope. Specifications are canonical and live
+  in this repository (openspec/), versioned with code. The zakharov-llm store
+  is not used by this project.
+
+  Confluence and Jira are forbidden: no pages, no tickets, no links, no
+  integrations, no mentions in artifacts. Tracking is GitHub Issues, created
+  when a roadmap phase enters elaboration.
+
+  No external writes of any kind. Sanctioned network access only: Hugging Face
+  model downloads, the edge-tts endpoint, and git to github.com.
+
+  Non-commercial use only: MusicGen weights are CC-BY-NC 4.0.
+
+rules:
+  proposal:
+    - "Reference the GitHub issue created when this roadmap phase entered elaboration. Never mention Jira or Confluence."
+    - "State what is out of scope."
+  integrations:
+    - "Jira and Confluence are forbidden in this project by CONSTITUTION.md."
+    - "Record an explicit skip for both, citing CONSTITUTION.md as the owner's standing confirmation; do not invent a new confirmation."
+  design:
+    - "No cross-repo or external sync plan exists; the only integration surface is this repository."
+  doc:
+    - "SUPERSEDES everything the schema says about Confluence: the publish target is docs/ in this repository."
+    - "Diagrams are Mermaid fenced code blocks; never the mermaiddiagram macro."
+    - "No WHEN/THEN; reference requirements by name. After archive the draft is merged into docs/capabilities/<capability>.md."
+  tasks:
+    - "No external sync tasks exist in this project; every task states how completion is verified."
+
+operations:
+  apply:
+    guidance:
+      - "Only code, specs and docs inside this repository. No Jira or Confluence writes."
+  archive:
+    guidance:
+      - "Ask the human to approve archive first."
+      - "Skip every Confluence and Jira step; they do not exist here."
+      - "After `openspec archive`, merge the change's docs draft into docs/capabilities/<capability>.md semantically."
+      - "Update docs/architecture.md if components, data flow or dependencies changed."
+      - "Close the GitHub issue."

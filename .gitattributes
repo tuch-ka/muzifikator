@@ -1,0 +1,8 @@
+* text=auto eol=lf
+
+*.mp3 binary
+*.m4a binary
+*.wav binary
+*.sqlite3 binary
+
+uv.lock text eol=lf
