@@ -2,6 +2,7 @@
 
 import threading
 import time
+from pathlib import Path
 from types import SimpleNamespace
 
 import pytest
@@ -25,6 +26,7 @@ from muzifikator.storage import (
     get_generation,
     init_storage,
     list_generation_files,
+    list_generations,
     start_generation,
 )
 
@@ -70,7 +72,13 @@ def _build_env(tmp_path, *, speech_provider=None):
         formats=("mp3", "m4a"),
     )
     manager = JobManager(deps)
-    app = create_app(_preflight(), engine=engine, session_factory=factory, jobs=manager)
+    app = create_app(
+        _preflight(),
+        engine=engine,
+        session_factory=factory,
+        jobs=manager,
+        settings=Settings(output_dir=tmp_path / "out"),
+    )
     return SimpleNamespace(
         app=app,
         factory=factory,
@@ -273,3 +281,36 @@ def test_explicit_parameters_override_settings(env):
     assert env.music_provider.calls[-1][0] == "symphonic metal"
     settings = env.client.get("/api/settings").json()
     assert settings["music_tags"] == "folk metal"
+
+
+def test_folder_puts_files_into_subdirectory(env):
+    created = _post(env.client, folder="2026-11").json()
+    body = _wait(env.client, created["id"])
+
+    assert body["status"] == "done"
+    for path in body["files"].values():
+        assert Path(path).parent == (env.tmp_path / "out" / "2026-11").resolve()
+        assert Path(path).is_file()
+
+    listing = env.client.get("/api/files", params={"path": "2026-11"}).json()
+    assert {entry["name"] for entry in listing["entries"]} == {
+        Path(path).name for path in body["files"].values()
+    }
+
+
+def test_invalid_folder_is_rejected_before_creation(env):
+    response = _post(env.client, folder="../escape")
+
+    assert response.status_code == 400
+    with env.factory() as session:
+        assert list_generations(session) == []
+
+    accepted = _post(env.client)
+    assert accepted.status_code == 202
+    assert _wait(env.client, accepted.json()["id"])["status"] == "done"
+
+
+def test_absolute_folder_is_rejected(env):
+    response = _post(env.client, folder="/tmp")
+
+    assert response.status_code == 400

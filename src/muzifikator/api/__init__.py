@@ -9,6 +9,7 @@ from .settings_store import (
     SettingsStore,
     UnknownSettingError,
 )
+from .ui import build_ui_router, web_directory
 
 __all__ = [
     "SETTING_KEYS",
@@ -20,4 +21,6 @@ __all__ = [
     "build_files_router",
     "build_generations_router",
     "build_settings_router",
+    "build_ui_router",
+    "web_directory",
 ]

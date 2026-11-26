@@ -9,10 +9,18 @@ from importlib import metadata
 from typing import Any
 
 from fastapi import FastAPI
+from fastapi.staticfiles import StaticFiles
 from sqlalchemy import Engine
 from sqlalchemy.orm import Session, sessionmaker
 
-from .api import SettingsStore, build_files_router, build_generations_router, build_settings_router
+from .api import (
+    SettingsStore,
+    build_files_router,
+    build_generations_router,
+    build_settings_router,
+    build_ui_router,
+    web_directory,
+)
 from .config import Settings
 from .jobs import JobManager
 from .preflight import PreflightResult
@@ -72,10 +80,17 @@ def create_app(
     )
 
     app.include_router(
-        build_generations_router(session_factory=session_factory, jobs=jobs, store=store)
+        build_generations_router(
+            session_factory=session_factory,
+            jobs=jobs,
+            store=store,
+            output_dir=base.output_dir,
+        )
     )
     app.include_router(build_settings_router(store))
     app.include_router(build_files_router(base.output_dir))
+    app.include_router(build_ui_router())
+    app.mount("/static", StaticFiles(directory=web_directory()), name="static")
 
     @app.get("/api/health")
     def health() -> dict[str, Any]:

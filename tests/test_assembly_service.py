@@ -13,6 +13,7 @@ from muzifikator.assembly import (
     AssemblyService,
     EncodingError,
     InsufficientMusicError,
+    InvalidFolderError,
     UnknownFormatError,
 )
 
@@ -173,3 +174,43 @@ def test_failed_encoding_leaves_no_files(tmp_path, inputs):
 
     leftovers = list((tmp_path / "out").iterdir())
     assert leftovers == []
+
+
+def test_render_into_subfolder(tmp_path, inputs):
+    speech, music = inputs
+
+    result = _service(tmp_path).render(
+        AssemblyRequest(
+            speech=speech, music=music, text="В папку", formats=("mp3",), subdir="2026-11"
+        )
+    )
+
+    path = result.files["mp3"]
+    assert path.parent == (tmp_path / "out" / "2026-11").resolve()
+    assert path.is_file()
+
+
+def test_render_creates_nested_subfolders(tmp_path, inputs):
+    speech, music = inputs
+
+    result = _service(tmp_path).render(
+        AssemblyRequest(
+            speech=speech,
+            music=music,
+            text="Глубоко",
+            formats=("mp3",),
+            subdir="2026/11/26",
+        )
+    )
+
+    assert result.files["mp3"].parent == (tmp_path / "out" / "2026" / "11" / "26").resolve()
+    assert result.files["mp3"].is_file()
+
+
+def test_subfolder_outside_root_is_rejected(tmp_path, inputs):
+    speech, music = inputs
+
+    with pytest.raises(InvalidFolderError):
+        _service(tmp_path).render(
+            AssemblyRequest(speech=speech, music=music, text="Наружу", subdir="../escape")
+        )

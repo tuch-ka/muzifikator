@@ -9,12 +9,14 @@ from datetime import datetime
 from pathlib import Path
 
 from ..media import MediaError, MediaTools
+from ..paths import PathOutsideRootError, resolve_within
 from .base import (
     DEFAULT_FORMATS,
     AssemblyRequest,
     AssemblyResult,
     EncodingError,
     InsufficientMusicError,
+    InvalidFolderError,
     OutputWriteError,
     normalize_formats,
 )
@@ -70,8 +72,9 @@ class AssemblyService:
                 f"музыка короче микса: {music_duration:.2f} с при нужных {needed:.2f} с"
             )
 
-        self.output_dir.mkdir(parents=True, exist_ok=True)
-        master = temporary_path(self.output_dir, ".wav")
+        target_dir = self._target_dir(request.subdir)
+        target_dir.mkdir(parents=True, exist_ok=True)
+        master = temporary_path(target_dir, ".wav")
         temporaries: list[Path] = [master]
         encodings: list[_Encoding] = []
         try:
@@ -83,12 +86,12 @@ class AssemblyService:
                 music_duration=music_duration,
             )
             for fmt in formats:
-                path = temporary_path(self.output_dir, f".{fmt}")
+                path = temporary_path(target_dir, f".{fmt}")
                 temporaries.append(path)
                 encodings.append(_Encoding(format=fmt, path=path))
             self._encode(master, encodings)
             targets = plan_output_files(
-                self.output_dir, text=request.text, formats=formats, now=self.clock()
+                target_dir, text=request.text, formats=formats, now=self.clock()
             )
             try:
                 replace_all([(item.path, targets[item.format]) for item in encodings])
@@ -100,6 +103,14 @@ class AssemblyService:
 
         log.info("сборка: %s", ", ".join(str(path) for path in targets.values()))
         return AssemblyResult(files=targets, formats=formats, duration_seconds=duration)
+
+    def _target_dir(self, subdir: str | None) -> Path:
+        if not subdir:
+            return self.output_dir
+        try:
+            return resolve_within(self.output_dir, subdir)
+        except PathOutsideRootError as exc:
+            raise InvalidFolderError(str(exc)) from exc
 
     def _encode(self, master: Path, encodings: list[_Encoding]) -> None:
         command = [self.media.ffmpeg_bin, "-y", "-i", str(master)]

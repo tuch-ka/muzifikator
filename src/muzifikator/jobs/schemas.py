@@ -16,6 +16,7 @@ class GenerationCreate(BaseModel):
     music_tags: str | None = None
     music_seed: int | None = Field(default=None, ge=0)
     formats: list[str] | None = None
+    folder: str | None = None
 
     @field_validator("text")
     @classmethod
