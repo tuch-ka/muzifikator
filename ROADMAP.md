@@ -21,10 +21,18 @@
 Issue не заводится заранее: он появляется вместе с проработкой идеи, а не
 копится списком.
 
+Suno как сервис недоступен: сеть ограничена Hugging Face, edge-tts и git
+(`CONSTITUTION.md` п. 2.4). «Пение как у Suno» означает локальную модель,
+генерирующую песню по тексту, — модель и подход выбираются фазой оценки.
+
 ## Фазы
 
 | Фаза | Change | Capabilities | Issue |
 |---|---|---|---|
+| Минимальная длительность музыки: настройка `MUSIC_MIN_DURATION_SECONDS`, по умолчанию 20 с | `add-min-music-duration` | `music-generation` (mod) | — |
+| Файлы в интерфейсе: проигрывание и «открыть в файловом менеджере» с учётом ОС | `add-file-playback` | `web-interface` (mod), `output-files` (mod) | — |
+| Пение: оценка локальных моделей (YuE, ACE-Step, DiffSinger) и прототип | `evaluate-singing-models` | `skip_specs: true` | — |
+| Пение: реализация выбранного подхода | `add-singing-synthesis` | `singing-synthesis` (new), `generation-jobs` (mod), `web-interface` (mod) | — |
 | Провайдеры TTS: второй локальный провайдер (Piper), выбор провайдера в UI, ошибки провайдера | `add-tts-provider-switch` | `tts-providers` (new), `speech-synthesis` (mod), `web-interface` (mod) | — |
 | Тесты, README, лицензионные примечания | `add-tests-and-docs` | `skip_specs: true` | — |
 | Оценка CI: замеры, кэш apt, параллельные job'ы — только если выигрыш ощутим | `review-ci-performance` | `skip_specs: true` | — |
