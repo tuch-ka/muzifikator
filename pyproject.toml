@@ -33,6 +33,13 @@ dev = [
 [tool.hatch.build.targets.wheel]
 packages = ["src/muzifikator"]
 
+[tool.hatch.build.targets.sdist]
+include = [
+  "/src/muzifikator",
+  "/pyproject.toml",
+  "/README.md",
+]
+
 [[tool.uv.index]]
 name = "pytorch-cpu"
 url = "https://download.pytorch.org/whl/cpu"
