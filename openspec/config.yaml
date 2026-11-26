@@ -45,3 +45,4 @@ operations:
       - "After `openspec archive`, merge the change's docs draft into docs/capabilities/<capability>.md semantically."
       - "Update docs/architecture.md if components, data flow or dependencies changed."
       - "Close the GitHub issue."
+      - "Push the branch, open a PR and enable auto-merge (gh pr merge --auto --merge --delete-branch); do not wait for the merge or for the main CI run, just tell the owner to watch it."
