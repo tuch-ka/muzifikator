@@ -67,8 +67,11 @@ seconds, seed) -> numpy.ndarray`. `TransformersBackend` держит модел�
 - `MUSIC_PROMPT` — по умолчанию `folk metal`.
 - `MUSIC_DEVICE` — `auto` (по умолчанию), `mps`, `cpu`. `auto` выбирает `mps`,
   если доступно. На MPS считается в `float32` (как записано в архитектуре).
-- `do_sample=True`, `guidance_scale=3.0`, `max_new_tokens = seconds * 50`
-  (MusicGen отдаёт 50 токенов в секунду при 32 кГц).
+- `do_sample=True`, `guidance_scale=3.0`,
+  `max_new_tokens = (seconds + 0.25) * 50` (MusicGen отдаёт 50 токенов в секунду
+  при 32 кГц). Запас 0,25 с — измеренная поправка: модель отдаёт примерно на
+  0,06 с меньше запрошенного при любом размере сегмента, без запаса результат
+  оказывался короче запрошенного.
 
 ### 4. Seed
 
