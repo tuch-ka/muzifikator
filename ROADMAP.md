@@ -19,7 +19,7 @@ Issue не заводится заранее: он появляется вмес
 | # | Фаза | Change | Capabilities | Issue | Статус |
 |---|---|---|---|---|---|
 | 1 | Каркас: uv-проект, конфиг, логи, preflight ffmpeg/ffprobe, `/api/health` | `add-project-scaffold` | `ffmpeg-preflight`, `service-health` | #1 | done |
-| 2 | Хранилище: SQLite, Alembic, таблицы `generations` и `settings` | `add-storage-migrations` | `generation-history`, `persisted-settings` | — | planned |
+| 2 | Хранилище: SQLite, Alembic, таблицы `generations` и `settings` | `add-storage-migrations` | `generation-history`, `persisted-settings`, `storage-schema` | #2 | done |
 | 3 | Озвучка: абстракция провайдера, edge-tts как первый, список голосов, длительность, кэш, «рык» | `add-tts` | `speech-synthesis` | — | planned |
 | 4 | Музыка: MusicGen из transformers, seed, сегменты, теги | `add-music-generation` | `music-generation` | — | planned |
 | 5 | Микс и экспорт: дакинг, фейды, mp3/m4a, имена файлов | `add-audio-mix` | `audio-assembly`, `output-files` | — | planned |
