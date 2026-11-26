@@ -26,7 +26,7 @@ Issue не заводится заранее: он появляется вмес
 | 3 | Озвучка: абстракция провайдера, edge-tts как первый, список голосов, длительность, кэш, «рык» | `add-tts` | `speech-synthesis` | #3 | done |
 | 4 | Музыка: MusicGen из transformers, seed, сегменты, теги | `add-music-generation` | `music-generation` | #4 | done |
 | 5 | CI и типы: GitHub Actions — ruff, mypy (strict по `src`), pytest, openspec validate, build | `add-ci` | `skip_specs: true` | #5 | done |
-| 6 | Микс и экспорт: дакинг, фейды, mp3/m4a, имена файлов | `add-audio-mix` | `audio-assembly`, `output-files` | — | planned |
+| 6 | Микс и экспорт: дакинг, фейды, mp3/m4a, имена файлов | `add-audio-mix` | `audio-assembly`, `output-files`, `ffmpeg-preflight` (mod) | #7 | done |
 | 7 | Задачи: single-flight, стадии, polling, запись в БД | `add-job-orchestration` | `generation-jobs` | — | planned |
 | 8 | API файлов и настроек: корни, листинг, сохранение настроек | `add-fs-and-settings-api` | `web-interface` | — | planned |
 | 9 | UI: два поля, предзаполненные теги, перегенерация, папка, прогресс | `add-web-ui` | `web-interface` | — | planned |

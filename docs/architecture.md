@@ -24,17 +24,17 @@ flowchart LR
     JOB --> MUS["MusicService<br/>MusicGen + сегменты"]
     MUS --- WEIGHTS[("models/")]
     MUS --- MEDIA["MediaTools<br/>ffmpeg/ffprobe"]
-    JOB --> MIX["ffmpeg<br/>mix, ducking, fades"]
-    MIX --> OUT["выходной каталог<br/>файловая система"]
+    JOB --> MIX["AssemblyService<br/>дакинг, фейды, экспорт"]
+    MIX --> OUT["OUTPUT_DIR<br/>mp3 + m4a"]
     API --> DB[("SQLite<br/>generations, settings")]
     ST --- DB
     PF -.->|"снимок версий"| API
 ```
 
 Сейчас реализованы конфиг, preflight, хранилище (`storage/`), слой речи
-(`speech/`: провайдер edge-tts, кэш, рык) и слой музыки (`music/`: MusicGen,
-сегменты с кроссфейдом, общий `media.py` для ffmpeg). Очередь задач, микс и UI —
-план последующих фаз.
+(`speech/`: провайдер edge-tts, кэш, рык), слой музыки (`music/`: MusicGen,
+сегменты с кроссфейдом) и сборка (`assembly/`: микс, дакинг, экспорт), поверх
+общего `media.py` для ffmpeg. Очередь задач и UI — план последующих фаз.
 
 ## Поток генерации
 
@@ -77,6 +77,11 @@ sequenceDiagram
 - Музыка — MusicGen на MPS в `float32`, окно 30 с, длиннее — сегменты с
   кроссфейдом 2 с; seed воспроизводит трек в пределах одного окружения; кэша
   музыки нет; ffmpeg-операции общие с речью (`media.py`).
+- Сборка — один ffmpeg-проход: музыка с фейдами и sidechain-дакингом от речи,
+  `amix` без деления уровней, `loudnorm` до −16 LUFS; после речи 2 с музыки.
+  Экспорт MP3 и M4A из WAV-мастера, запись атомарная, имена транслитерируются.
+- Preflight проверяет не только бинари, но и энкодеры `libmp3lame`/`aac`:
+  сборка без них ломает старт, а не первую генерацию.
 - Время в базе — naive UTC, на границе слоя превращается в aware-UTC
   (`UTCDateTime`); коммит транзакций — на вызывающей стороне.
 - Одна модель MusicGen в памяти, одна генерация одновременно.
