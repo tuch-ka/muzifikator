@@ -1,14 +1,19 @@
 "use strict";
 
 const POLL_INTERVAL_MS = 1000;
+const PAGE_SIZE = 50;
 const STAGE_WIDTH = { tts: "33%", music: "66%", mix: "100%" };
 const STAGE_LABEL = { tts: "Озвучка", music: "Музыка", mix: "Микс" };
+const AUDIO_EXTENSIONS = [".mp3", ".m4a", ".wav", ".aac"];
 
 const state = {
   busy: false,
-  timer: null,
   currentId: null,
   lastParams: null,
+  storagePath: "",
+  browserPath: "",
+  browserParent: null,
+  filesOffset: 0,
 };
 
 const el = (id) => document.getElementById(id);
@@ -47,14 +52,6 @@ function showMessage(text, kind) {
   }
 }
 
-function normalizeFolder(value) {
-  return value
-    .trim()
-    .replace(/\\/g, "/")
-    .replace(/^\/+/, "")
-    .replace(/\/+$/, "");
-}
-
 function setBusy(busy) {
   state.busy = busy;
   el("submit").disabled = busy || !el("text").value.trim();
@@ -63,8 +60,7 @@ function setBusy(busy) {
 }
 
 function showStatus(text, stage) {
-  const section = el("status");
-  section.hidden = false;
+  el("status").hidden = false;
   el("status-text").textContent = text;
   el("status-bar").style.width = STAGE_WIDTH[stage] || "5%";
 }
@@ -74,7 +70,7 @@ function hideStatus() {
   el("status-bar").style.width = "0";
 }
 
-function renderFiles(files) {
+function renderResultFiles(files) {
   const list = el("result-files");
   list.replaceChildren();
   for (const [format, path] of Object.entries(files)) {
@@ -85,49 +81,140 @@ function renderFiles(files) {
   el("result").hidden = Object.keys(files).length === 0;
 }
 
-function renderListing(listing) {
-  const list = el("files-list");
-  list.replaceChildren();
-  for (const entry of listing.entries) {
-    const item = document.createElement("li");
-    item.textContent = entry.kind === "dir" ? entry.name + "/" : entry.name;
-    list.append(item);
-  }
-  const shown = listing.path ? "/" + listing.path : "/";
-  el("files-path").textContent = listing.root + shown;
+function isAudio(name) {
+  const lower = name.toLowerCase();
+  return AUDIO_EXTENSIONS.some((extension) => lower.endsWith(extension));
+}
 
-  const datalist = el("folders");
-  datalist.replaceChildren();
-  for (const entry of listing.entries) {
-    if (entry.kind !== "dir") {
-      continue;
-    }
-    const option = document.createElement("option");
-    option.value = entry.path;
-    datalist.append(option);
+function actionButton(label, handler, disabled) {
+  const button = document.createElement("button");
+  button.type = "button";
+  button.className = "small secondary";
+  button.textContent = label;
+  button.disabled = Boolean(disabled);
+  button.addEventListener("click", handler);
+  return button;
+}
+
+function fileItem(entry) {
+  const item = document.createElement("li");
+  if (!entry.exists) {
+    item.classList.add("missing");
+  }
+  const line = document.createElement("div");
+  line.className = "line";
+
+  const title = document.createElement("span");
+  title.className = "title";
+  title.textContent = entry.name + (entry.exists ? "" : " (нет на диске)");
+  line.append(title);
+
+  if (isAudio(entry.name)) {
+    line.append(
+      actionButton("Проиграть", () => playFile(entry), !entry.exists)
+    );
+  }
+  line.append(
+    actionButton("Показать", () => revealFile(entry), !entry.exists)
+  );
+  line.append(actionButton("Удалить", () => deleteGeneration(entry)));
+
+  const meta = document.createElement("div");
+  meta.className = "meta";
+  const created = new Date(entry.created_at);
+  const duration = entry.duration_seconds
+    ? " · " + entry.duration_seconds.toFixed(1) + " с"
+    : "";
+  meta.textContent =
+    entry.format +
+    " · " +
+    created.toLocaleString("ru-RU") +
+    duration +
+    (entry.size ? " · " + Math.round(entry.size / 1024) + " КБ" : "");
+  item.append(line, meta);
+  return item;
+}
+
+function appendFiles(entries) {
+  const list = el("files-list");
+  for (const entry of entries) {
+    list.append(fileItem(entry));
   }
 }
 
-async function refreshFiles() {
-  const folder = normalizeFolder(el("folder").value);
-  try {
-    const listing = await api("/api/files?path=" + encodeURIComponent(folder));
-    renderListing(listing);
-  } catch (error) {
+async function loadFiles({ reset }) {
+  if (reset) {
+    state.filesOffset = 0;
     el("files-list").replaceChildren();
-    if (error.status === 404) {
-      el("files-path").textContent = folder ? "папки пока нет: /" + folder : "";
-      return;
-    }
-    el("files-path").textContent = "";
-    showMessage(error.message, "error");
+  }
+  const page = await api(
+    "/api/files?limit=" + PAGE_SIZE + "&offset=" + state.filesOffset
+  );
+  appendFiles(page.files);
+  state.filesOffset += page.files.length;
+  el("files-more").hidden = !page.has_more;
+}
+
+function playFile(entry) {
+  const player = el("player");
+  player.src =
+    "/api/generations/" +
+    encodeURIComponent(entry.generation_id) +
+    "/files/" +
+    encodeURIComponent(entry.format) +
+    "/media";
+  player.hidden = false;
+  player.play().catch(() => {
+    showMessage("Браузер не смог воспроизвести файл", "error");
+  });
+}
+
+async function revealFile(entry) {
+  try {
+    await api(
+      "/api/generations/" +
+        encodeURIComponent(entry.generation_id) +
+        "/files/" +
+        encodeURIComponent(entry.format) +
+        "/reveal",
+      { method: "POST" }
+    );
+  } catch (error) {
+    showMessage("Не удалось открыть файл: " + error.message, "error");
+  }
+}
+
+async function deleteGeneration(entry) {
+  const approved = window.confirm(
+    "Удалить «" + entry.name + "» и всю генерацию? Действие необратимо."
+  );
+  if (!approved) {
+    return;
+  }
+  try {
+    await api("/api/generations/" + encodeURIComponent(entry.generation_id), {
+      method: "DELETE",
+    });
+    showMessage("Генерация удалена", "ok");
+    el("player").hidden = true;
+    el("player").removeAttribute("src");
+    renderResultFiles({});
+    await loadFiles({ reset: true });
+  } catch (error) {
+    showMessage("Не удалось удалить: " + error.message, "error");
   }
 }
 
 async function loadSettings() {
   const settings = await api("/api/settings");
   el("tags").value = settings.music_tags || "";
+  state.storagePath = settings.output_dir || "";
+  renderStorage();
   return settings;
+}
+
+function renderStorage() {
+  el("storage-path").textContent = state.storagePath || "не задан";
 }
 
 async function loadVoices(settings) {
@@ -145,12 +232,44 @@ async function loadVoices(settings) {
   }
 }
 
+async function loadBrowse(path) {
+  const query = path ? "?path=" + encodeURIComponent(path) : "";
+  const listing = await api("/api/storage/browse" + query);
+  state.browserPath = listing.path;
+  el("browser-path").textContent = listing.path;
+  el("browser-up").disabled = !listing.parent;
+  const list = el("browser-list");
+  list.replaceChildren();
+  for (const entry of listing.entries) {
+    const item = document.createElement("li");
+    item.textContent = entry.name + "/";
+    item.addEventListener("click", () => {
+      loadBrowse(entry.path).catch((error) =>
+        showMessage(error.message, "error")
+      );
+    });
+    list.append(item);
+  }
+  state.browserParent = listing.parent;
+}
+
+async function saveStorage(path) {
+  const patched = await api("/api/settings", {
+    method: "PATCH",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ output_dir: path }),
+  });
+  state.storagePath = patched.output_dir;
+  renderStorage();
+  el("storage-browser").hidden = true;
+  showMessage("Каталог хранения сохранён", "ok");
+}
+
 function collectParams() {
   return {
     text: el("text").value,
     voice: el("voice").value,
     music_tags: el("tags").value.trim() || null,
-    folder: normalizeFolder(el("folder").value) || null,
   };
 }
 
@@ -168,19 +287,19 @@ async function poll(generationId) {
     }
     if (body.status === "done") {
       showStatus("Готово", "mix");
-      renderFiles(body.files);
+      renderResultFiles(body.files);
       setBusy(false);
       state.currentId = null;
-      await refreshFiles();
+      await loadFiles({ reset: true });
       return;
     }
     if (body.status === "failed") {
       hideStatus();
-      renderFiles({});
+      renderResultFiles({});
       showMessage(body.error || "генерация не удалась", "error");
       setBusy(false);
       state.currentId = null;
-      await refreshFiles();
+      await loadFiles({ reset: true });
       return;
     }
     const stage = body.stage || "";
@@ -189,7 +308,7 @@ async function poll(generationId) {
   }
 }
 
-async function submitGeneration(params, { regenerate }) {
+async function submitGeneration(params) {
   if (state.busy) {
     return;
   }
@@ -199,19 +318,17 @@ async function submitGeneration(params, { regenerate }) {
   }
   setBusy(true);
   showMessage("");
-  renderFiles({});
+  renderResultFiles({});
   showStatus("Отправка", "");
   try {
-    const payload = {
-      text: params.text,
-      voice: params.voice,
-      music_tags: params.music_tags,
-      folder: params.folder,
-    };
     const created = await api("/api/generations", {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify(payload),
+      body: JSON.stringify({
+        text: params.text,
+        voice: params.voice,
+        music_tags: params.music_tags,
+      }),
     });
     state.lastParams = params;
     showStatus("В работе", "");
@@ -252,15 +369,47 @@ async function init() {
   el("text").addEventListener("input", () => setBusy(state.busy));
   el("generation-form").addEventListener("submit", (event) => {
     event.preventDefault();
-    submitGeneration(collectParams(), { regenerate: null });
+    submitGeneration(collectParams());
   });
   el("regenerate").addEventListener("click", () => {
     if (state.lastParams) {
-      submitGeneration(state.lastParams, { regenerate: state.lastParams });
+      submitGeneration(state.lastParams);
     }
   });
   el("save-settings").addEventListener("click", saveSettings);
-  el("folder").addEventListener("change", refreshFiles);
+
+  el("storage-edit").addEventListener("click", () => {
+    el("storage-browser").hidden = false;
+    loadBrowse(state.storagePath || "").catch((error) =>
+      showMessage(error.message, "error")
+    );
+  });
+  el("browser-close").addEventListener("click", () => {
+    el("storage-browser").hidden = true;
+  });
+  el("browser-up").addEventListener("click", () => {
+    if (state.browserParent) {
+      loadBrowse(state.browserParent).catch((error) =>
+        showMessage(error.message, "error")
+      );
+    }
+  });
+  el("browser-use").addEventListener("click", () => {
+    saveStorage(state.browserPath).catch((error) =>
+      showMessage("Не удалось сохранить каталог: " + error.message, "error")
+    );
+  });
+  el("browser-manual-use").addEventListener("click", () => {
+    const typed = el("browser-manual").value.trim();
+    saveStorage(typed).catch((error) =>
+      showMessage("Не удалось сохранить каталог: " + error.message, "error")
+    );
+  });
+  el("files-more").addEventListener("click", () => {
+    loadFiles({ reset: false }).catch((error) =>
+      showMessage(error.message, "error")
+    );
+  });
 
   try {
     const settings = await loadSettings();
@@ -269,7 +418,11 @@ async function init() {
     showMessage("Не удалось загрузить настройки: " + error.message, "error");
   }
   setBusy(false);
-  await refreshFiles();
+  try {
+    await loadFiles({ reset: true });
+  } catch (error) {
+    showMessage(error.message, "error");
+  }
 }
 
 init();

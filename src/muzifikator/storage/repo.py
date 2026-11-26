@@ -127,6 +127,10 @@ def add_generation_file(
     return row
 
 
+def get_generation_file(session: Session, generation_id: str, format: str) -> GenerationFile | None:
+    return session.get(GenerationFile, (generation_id, format))
+
+
 def list_generation_files(session: Session, generation_id: str) -> list[GenerationFile]:
     return list(
         session.query(GenerationFile)

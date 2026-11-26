@@ -9,14 +9,12 @@ from datetime import datetime
 from pathlib import Path
 
 from ..media import MediaError, MediaTools
-from ..paths import PathOutsideRootError, resolve_within
 from .base import (
     DEFAULT_FORMATS,
     AssemblyRequest,
     AssemblyResult,
     EncodingError,
     InsufficientMusicError,
-    InvalidFolderError,
     OutputWriteError,
     normalize_formats,
 )
@@ -78,7 +76,7 @@ class AssemblyService:
                 f"музыка короче микса: {music_duration:.2f} с при нужных {target_duration:.2f} с"
             )
 
-        target_dir = self._target_dir(request.subdir)
+        target_dir = request.output_dir or self.output_dir
         target_dir.mkdir(parents=True, exist_ok=True)
         master = temporary_path(target_dir, ".wav")
         temporaries: list[Path] = [master]
@@ -110,14 +108,6 @@ class AssemblyService:
 
         log.info("сборка: %s", ", ".join(str(path) for path in targets.values()))
         return AssemblyResult(files=targets, formats=formats, duration_seconds=duration)
-
-    def _target_dir(self, subdir: str | None) -> Path:
-        if not subdir:
-            return self.output_dir
-        try:
-            return resolve_within(self.output_dir, subdir)
-        except PathOutsideRootError as exc:
-            raise InvalidFolderError(str(exc)) from exc
 
     def _encode(self, master: Path, encodings: list[_Encoding]) -> None:
         command = [self.media.ffmpeg_bin, "-y", "-i", str(master)]

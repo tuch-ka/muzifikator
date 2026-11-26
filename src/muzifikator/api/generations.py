@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-from pathlib import Path
-
 from fastapi import APIRouter, HTTPException, Query
 from sqlalchemy.orm import Session, sessionmaker
 
@@ -16,7 +14,6 @@ from ..jobs import (
     JobManager,
     VoiceView,
 )
-from ..paths import PathOutsideRootError, resolve_within
 from ..speech import VoiceListError
 from ..storage import (
     Generation,
@@ -34,7 +31,6 @@ def build_generations_router(
     session_factory: sessionmaker[Session] | None,
     jobs: JobManager | None,
     store: SettingsStore | None,
-    output_dir: Path,
 ) -> APIRouter:
     router = APIRouter()
 
@@ -101,12 +97,6 @@ def build_generations_router(
             formats = normalize_formats(requested_formats)
         except UnknownFormatError as exc:
             raise HTTPException(status_code=400, detail=str(exc)) from exc
-        folder = (payload.folder or "").strip()
-        if folder:
-            try:
-                resolve_within(output_dir, folder)
-            except PathOutsideRootError as exc:
-                raise HTTPException(status_code=400, detail=str(exc)) from exc
 
         try:
             known_voices = {item.name for item in manager.deps.speech.list_voices()}
@@ -135,7 +125,6 @@ def build_generations_router(
             music_tags=music_tags,
             music_seed=payload.music_seed,
             formats=formats,
-            folder=folder or None,
         )
         try:
             with factory() as session:

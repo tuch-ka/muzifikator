@@ -15,7 +15,7 @@ flowchart LR
         ST -->|"ок"| APP["uvicorn"]
         ST -->|"ошибка"| EXIT
     end
-    UI["Web UI<br/>static HTML + JS<br/>из пакета"] --> API["FastAPI<br/>routers: ui, generations,<br/>files, settings"]
+    UI["Web UI<br/>static HTML + JS<br/>из пакета"] --> API["FastAPI<br/>routers: ui, generations,<br/>library, settings"]
     OPS["curl /health"] --> API
     API --> JOB["JobManager<br/>single-flight, поток"]
     JOB --> SPEECH["SpeechService<br/>провайдер + кэш + ffmpeg"]
@@ -25,7 +25,7 @@ flowchart LR
     MUS --- WEIGHTS[("models/")]
     MUS --- MEDIA["MediaTools<br/>ffmpeg/ffprobe"]
     JOB --> MIX["AssemblyService<br/>дакинг, фейды, экспорт"]
-    MIX --> OUT["OUTPUT_DIR<br/>mp3 + m4a"]
+    MIX --> OUT["каталог хранения<br/>mp3 + m4a"]
     API --> DB[("SQLite<br/>generations, generation_files, settings")]
     ST --- DB
     PF -.->|"снимок версий"| API
@@ -88,10 +88,12 @@ sequenceDiagram
   одновременно, стадии `tts → music → mix` пишутся в базу до работы, результат
   и файлы — в `generations`/`generation_files`. Поток `daemon`: остановка не ждёт
   генерацию, а следующий старт помечает прерванные задачи `failed`.
-- HTTP-слой собран из роутеров (`api/`): статика, задачи, файлы и настройки.
-  Проверка путей — один помощник `paths.resolve_within` (листинг, папка
-  результата, запись); доступ ограничен `OUTPUT_DIR`. Настройки — белый список в
-  таблице `settings`, они же умолчания постановки.
+- HTTP-слой собран из роутеров (`api/`): статика, задачи, библиотека и
+  настройки. Библиотека работает по базе: список, проигрывание, открытие и
+  удаление — по id записи, путь от клиента не принимается; открытие выполняет
+  локальную команду ОС. Каталог хранения — настройка `output_dir` (по умолчанию
+  `~/muzifikator`), пути в базе абсолютные; данные прежних версий не переносятся,
+  локальная база пересоздаётся.
 - UI — статические `index.html`, `style.css`, `app.js` в пакете: без сборки и
   CDN, прогресс опросом стадий, данные выводятся только текстом.
 - Время в базе — naive UTC, на границе слоя превращается в aware-UTC

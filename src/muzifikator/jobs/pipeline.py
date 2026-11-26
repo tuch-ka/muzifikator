@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import logging
 import tempfile
+from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -32,7 +33,7 @@ class JobDeps:
     speech: SpeechService
     music: MusicService
     assembly: AssemblyService
-    output_dir: Path
+    resolve_output_dir: Callable[[], Path]
     tail_seconds: float
     formats: tuple[str, ...]
 
@@ -57,8 +58,9 @@ def run_generation(generation_id: str, params: GenerationParams, deps: JobDeps) 
 
             set_stage(session, generation_id, "music")
             session.commit()
-            deps.output_dir.mkdir(parents=True, exist_ok=True)
-            with tempfile.TemporaryDirectory(prefix=".tmp-music-", dir=deps.output_dir) as workdir:
+            output_dir = deps.resolve_output_dir()
+            output_dir.mkdir(parents=True, exist_ok=True)
+            with tempfile.TemporaryDirectory(prefix=".tmp-music-", dir=output_dir) as workdir:
                 music = deps.music.generate(
                     MusicRequest(
                         duration_seconds=deps.assembly.required_music_duration(
@@ -79,7 +81,7 @@ def run_generation(generation_id: str, params: GenerationParams, deps: JobDeps) 
                         music=music.path,
                         text=params.text,
                         formats=params.formats,
-                        subdir=params.folder,
+                        output_dir=output_dir,
                     )
                 )
 

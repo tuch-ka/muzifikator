@@ -26,12 +26,6 @@
       <input id="tags" name="tags" type="text" placeholder="folk metal">
     </div>
 
-    <div class="row">
-      <label for="folder">Папка</label>
-      <input id="folder" name="folder" type="text" list="folders" placeholder="например 2026-11">
-      <datalist id="folders"></datalist>
-    </div>
-
     <div class="actions">
       <button id="submit" type="submit">Сгенерировать</button>
       <button id="regenerate" type="button" disabled>Перегенерировать</button>
@@ -51,10 +45,33 @@
     <ul id="result-files"></ul>
   </section>
 
+  <section id="storage">
+    <h2>Каталог хранения</h2>
+    <p id="storage-path" class="hint"></p>
+    <button id="storage-edit" type="button" class="secondary">Изменить</button>
+    <div id="storage-browser" hidden>
+      <p id="browser-path" class="hint"></p>
+      <div class="actions">
+        <button id="browser-up" type="button" class="secondary">Выше</button>
+        <button id="browser-use" type="button">Выбрать этот каталог</button>
+        <button id="browser-close" type="button" class="secondary">Закрыть</button>
+      </div>
+      <ul id="browser-list"></ul>
+      <div class="row">
+        <label for="browser-manual">Или введите абсолютный путь</label>
+        <input id="browser-manual" type="text" placeholder="/Users/you/muzifikator">
+      </div>
+      <div class="actions">
+        <button id="browser-manual-use" type="button">Использовать путь</button>
+      </div>
+    </div>
+  </section>
+
   <section id="files">
     <h2>Файлы</h2>
-    <p id="files-path" class="hint"></p>
+    <audio id="player" controls preload="none" hidden></audio>
     <ul id="files-list"></ul>
+    <button id="files-more" type="button" class="secondary" hidden>Показать ещё</button>
   </section>
 </main>
 <script src="/static/app.js"></script>

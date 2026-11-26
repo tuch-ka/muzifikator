@@ -10,6 +10,7 @@ from muzifikator.api.settings_store import (
 )
 from muzifikator.app import create_app
 from muzifikator.config import Settings
+from muzifikator.paths import expand
 from muzifikator.preflight import BinaryStatus, PreflightResult
 from muzifikator.storage import create_session_factory, init_storage
 
@@ -27,8 +28,13 @@ def factory(tmp_path):
 
 
 @pytest.fixture
-def store(factory):
-    return SettingsStore(factory, default_music_tags="folk metal", default_formats=("mp3", "m4a"))
+def store(factory, tmp_path):
+    return SettingsStore(
+        factory,
+        default_music_tags="folk metal",
+        default_formats=("mp3", "m4a"),
+        default_output_dir=tmp_path / "out",
+    )
 
 
 @pytest.fixture
@@ -46,8 +52,9 @@ def client(tmp_path, factory):
         yield client
 
 
-def test_defaults_when_nothing_saved(store):
+def test_defaults_when_nothing_saved(store, tmp_path):
     assert store.read() == {
+        "output_dir": str(expand(tmp_path / "out")),
         "tts_voice": None,
         "music_tags": "folk metal",
         "rate_percent": 0,
@@ -64,6 +71,30 @@ def test_update_is_partial_and_persistent(store):
     assert updated["growl"] is True
     assert updated["music_tags"] == "folk metal"
     assert store.read()["tts_voice"] == "voice-a"
+
+
+def test_output_dir_is_saved_and_effective(store, tmp_path):
+    target = tmp_path / "chosen"
+    target.mkdir()
+
+    updated = store.update({"output_dir": str(target)})
+
+    assert updated["output_dir"] == str(target.resolve())
+    assert store.effective_output_dir() == target.resolve()
+
+
+@pytest.mark.parametrize("payload", ["out", "", "/nonexistent/path/x"])
+def test_output_dir_rejects_bad_paths(store, payload):
+    with pytest.raises(InvalidSettingError):
+        store.update({"output_dir": payload})
+
+
+def test_output_dir_rejects_file(store, tmp_path):
+    path = tmp_path / "file.txt"
+    path.write_text("x", encoding="utf-8")
+
+    with pytest.raises(InvalidSettingError):
+        store.update({"output_dir": str(path)})
 
 
 def test_unknown_key_is_rejected(store):
@@ -98,11 +129,12 @@ def test_rejected_update_changes_nothing(store):
     assert store.read()["music_tags"] == "symphonic metal"
 
 
-def test_get_returns_defaults(client):
+def test_get_returns_defaults(client, tmp_path):
     response = client.get("/api/settings")
 
     assert response.status_code == 200
     assert response.json() == {
+        "output_dir": str(expand(tmp_path / "out")),
         "tts_voice": None,
         "music_tags": "folk metal",
         "rate_percent": 0,
@@ -124,10 +156,10 @@ def test_patch_updates_and_reads_back(client):
 
 
 def test_patch_unknown_key_is_400(client):
-    response = client.patch("/api/settings", json={"output_dir": "/tmp"})
+    response = client.patch("/api/settings", json={"musicgen_model": "x"})
 
     assert response.status_code == 400
-    assert "output_dir" in response.json()["detail"]
+    assert "musicgen_model" in response.json()["detail"]
 
 
 def test_patch_invalid_value_is_400(client):

@@ -15,8 +15,8 @@ from sqlalchemy.orm import Session, sessionmaker
 
 from .api import (
     SettingsStore,
-    build_files_router,
     build_generations_router,
+    build_library_router,
     build_settings_router,
     build_ui_router,
     web_directory,
@@ -46,6 +46,7 @@ def create_app(
     session_factory: sessionmaker[Session] | None = None,
     jobs: JobManager | None = None,
     settings: Settings | None = None,
+    store: SettingsStore | None = None,
 ) -> FastAPI:
     """Создать приложение из роутеров; тяжёлые зависимости приходят снаружи."""
     base = settings or Settings()
@@ -69,26 +70,20 @@ def create_app(
     app.state.session_factory = session_factory
     app.state.jobs = jobs
 
-    store = (
-        SettingsStore(
+    resolved_store = store
+    if resolved_store is None and session_factory is not None:
+        resolved_store = SettingsStore(
             session_factory,
             default_music_tags=base.music_prompt,
             default_formats=base.output_formats_list,
+            default_output_dir=base.output_dir,
         )
-        if session_factory is not None
-        else None
-    )
 
     app.include_router(
-        build_generations_router(
-            session_factory=session_factory,
-            jobs=jobs,
-            store=store,
-            output_dir=base.output_dir,
-        )
+        build_generations_router(session_factory=session_factory, jobs=jobs, store=resolved_store)
     )
-    app.include_router(build_settings_router(store))
-    app.include_router(build_files_router(base.output_dir))
+    app.include_router(build_settings_router(resolved_store))
+    app.include_router(build_library_router(session_factory=session_factory, store=resolved_store))
     app.include_router(build_ui_router())
     app.mount("/static", StaticFiles(directory=web_directory()), name="static")
 

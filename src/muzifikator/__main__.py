@@ -7,12 +7,14 @@ import sys
 
 import uvicorn
 
+from .api import SettingsStore
 from .app import create_app
 from .assembly import AssemblyService
 from .config import Settings
 from .jobs import JobDeps, JobManager
 from .logging_setup import configure_logging
 from .music import MusicGenProvider, MusicService, TransformersBackend
+from .paths import expand
 from .preflight import format_failure, run_preflight
 from .speech import EdgeTTSProvider, SpeechService
 from .storage import StorageError, create_session_factory, init_storage
@@ -87,10 +89,16 @@ def main(argv: list[str] | None = None) -> int:
         default_prompt=settings.music_prompt,
         model_name=settings.musicgen_model,
     )
+    store = SettingsStore(
+        session_factory,
+        default_music_tags=settings.music_prompt,
+        default_formats=settings.output_formats_list,
+        default_output_dir=settings.output_dir,
+    )
     assembly = AssemblyService(
         ffmpeg_bin=ffmpeg_bin,
         ffprobe_bin=ffprobe_bin,
-        output_dir=settings.output_dir,
+        output_dir=expand(settings.output_dir),
         formats=settings.output_formats_list,
         min_duration_seconds=settings.music_min_duration_seconds,
     )
@@ -100,7 +108,7 @@ def main(argv: list[str] | None = None) -> int:
             speech=speech,
             music=music,
             assembly=assembly,
-            output_dir=settings.output_dir,
+            resolve_output_dir=store.effective_output_dir,
             tail_seconds=assembly.tail_seconds,
             formats=settings.output_formats_list,
         )
@@ -112,6 +120,7 @@ def main(argv: list[str] | None = None) -> int:
         session_factory=session_factory,
         jobs=jobs,
         settings=settings,
+        store=store,
     )
     uvicorn.run(app, host=settings.host, port=settings.port, log_config=None)
     return 0

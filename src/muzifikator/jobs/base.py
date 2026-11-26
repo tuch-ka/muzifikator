@@ -15,4 +15,3 @@ class GenerationParams:
     music_tags: str | None = None
     music_seed: int | None = None
     formats: tuple[str, ...] | None = None
-    folder: str | None = None

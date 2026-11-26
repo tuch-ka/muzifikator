@@ -29,7 +29,7 @@ class Settings(BaseSettings):
     music_prompt: str = "folk metal"
     music_min_duration_seconds: float = Field(default=20.0, gt=0)
     music_device: Literal["auto", "mps", "cpu"] = "auto"
-    output_dir: Path = Path("out")
+    output_dir: Path = Path("~/muzifikator")
     output_formats: str = "mp3,m4a"
     ffmpeg_bin: Path | None = None
     ffprobe_bin: Path | None = None
