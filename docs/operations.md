@@ -1,7 +1,6 @@
 # Запуск и окружение
 
-> Черновик фазы «Каркас» (`add-project-scaffold`). При архивации change
-> семантически вливается в `docs/operations.md`.
+Запуск, окружение, установка ffmpeg, типовые ошибки.
 
 ## Что нужно
 
@@ -13,7 +12,11 @@
 | Инструмент | macOS | Debian / Ubuntu | Fedora |
 |---|---|---|---|
 | ffmpeg (+ ffprobe) | `brew install ffmpeg` | `sudo apt install ffmpeg` | `sudo dnf install ffmpeg` (RPM Fusion) |
-| uv | `brew install uv` | `curl -LsSf https://astral.sh/uv/install.sh \| sh` | `curl -LsSf https://astral.sh/uv/install.sh \| sh` |
+| uv | `brew install uv` | по явному разрешению владельца | по явному разрешению владельца |
+
+`uv` ставится из Homebrew: другие способы установки тянут пакеты из источников,
+не перечисленных в `CONSTITUTION.md` п. 2.4, и требуют отдельного разрешения
+владельца.
 
 Проверка:
 
@@ -46,7 +49,8 @@ uv sync
 uv run muzifikator
 ```
 
-Эквивалент: `uv run python -m muzifikator`.
+Эквивалент: `uv run python -m muzifikator`. `uv sync` ставит и dev-инструменты
+(`pytest`, `ruff`); для проверок — `uv run pytest`, `uv run ruff check .`.
 
 Успешный старт: в stderr строки preflight с путями и версиями бинарей, затем
 сообщение uvicorn о том, что сервис слушает адрес. Проверка:

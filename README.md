@@ -34,6 +34,23 @@ ffprobe -version
 - edge-tts (озвучка), MusicGen через `transformers` (музыка)
 - ffmpeg (микс), SQLite + Alembic (история и настройки)
 
+## Запуск
+
+```
+uv sync
+uv run muzifikator
+```
+
+Сервис слушает `http://127.0.0.1:8000`; состояние:
+
+```
+curl -s http://127.0.0.1:8000/api/health
+```
+
+Настройки — переменными окружения `HOST`, `PORT`, `LOG_LEVEL`, `FFMPEG_BIN`,
+`FFPROBE_BIN` или локальным `.env`. Подробности, включая типовые ошибки, —
+в `docs/operations.md`.
+
 ## Статус
 
 Проект в разработке. План и задачи — в OpenSpec change.

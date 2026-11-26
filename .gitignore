@@ -5,6 +5,9 @@ __pycache__/
 .python/
 *.egg-info/
 
+# Локальная конфигурация
+.env
+
 # Модели, данные, кэш
 models/
 data/

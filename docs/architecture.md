@@ -7,7 +7,14 @@ change, который меняет компоненты, потоки или з
 
 ```mermaid
 flowchart LR
+    subgraph START["запуск процесса"]
+        direction TB
+        CFG["конфиг<br/>окружение + .env"] --> PF["preflight<br/>ffmpeg, ffprobe"]
+        PF -->|"ок"| APP["uvicorn"]
+        PF -->|"ошибка"| EXIT["сообщение + exit 1"]
+    end
     UI["Web UI<br/>static HTML + JS"] --> API["FastAPI"]
+    OPS["curl /health"] --> API
     API --> JOB["JobManager<br/>single-flight"]
     JOB --> TTS["edge-tts"]
     JOB --> MUS["MusicGen<br/>transformers"]
@@ -16,9 +23,16 @@ flowchart LR
     API --> DB[("SQLite<br/>generations, settings")]
     MUS --> MODELS[("models/")]
     TTS --> CACHE[(".cache/tts")]
+    PF -.->|"снимок версий"| API
 ```
 
+Сейчас реализован только левый блок: конфиг, preflight и `GET /api/health`.
+Остальные компоненты — план последующих фаз.
+
 ## Поток генерации
+
+План последующих фаз. Реализован пока только `GET /api/health`, который отдаёт
+снимок preflight; генерации нет.
 
 ```mermaid
 sequenceDiagram
@@ -43,6 +57,10 @@ sequenceDiagram
 
 ## Решения и ограничения
 
+- Preflight выполняется до открытия порта: без рабочих `ffmpeg` и `ffprobe`
+  процесс завершается с кодом 1, сервиса нет.
+- Снимок preflight неизменяем и кладётся в состояние приложения; health его
+  только сериализует, внешние процессы на запросах не запускаются.
 - Одна модель MusicGen в памяти, одна генерация одновременно.
 - Окно модели — 30 с; длиннее — сегменты с кроссфейдом.
 - На MPS считается в `float32`; CPU-режим возможен, но медленный.
