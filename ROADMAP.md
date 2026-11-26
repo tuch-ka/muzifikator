@@ -30,7 +30,7 @@ Suno как сервис недоступен: сеть ограничена Hug
 | Фаза | Change | Capabilities | Issue |
 |---|---|---|---|
 | Пение: оценка локальных моделей (YuE, ACE-Step, DiffSinger) и прототип | `evaluate-singing-models` | `skip_specs: true` | — |
-| Пение: реализация выбранного подхода | `add-singing-synthesis` | `singing-synthesis` (new), `generation-jobs` (mod), `web-interface` (mod) | — |
+| Пение: реализация выбранного подхода — только при положительном решении фазы оценки | `add-singing-synthesis` | `singing-synthesis` (new), `generation-jobs` (mod), `web-interface` (mod) | — |
 | Провайдеры TTS: второй локальный провайдер (Piper), выбор провайдера в UI, ошибки провайдера | `add-tts-provider-switch` | `tts-providers` (new), `speech-synthesis` (mod), `web-interface` (mod) | — |
 | Тесты, README, лицензионные примечания | `add-tests-and-docs` | `skip_specs: true` | — |
 | Оценка CI: замеры, кэш apt, параллельные job'ы — только если выигрыш ощутим | `review-ci-performance` | `skip_specs: true` | — |
