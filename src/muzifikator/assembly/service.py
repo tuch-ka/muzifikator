@@ -46,17 +46,23 @@ class AssemblyService:
         output_dir: Path,
         formats: Sequence[str] = DEFAULT_FORMATS,
         mix_settings: MixSettings | None = None,
+        min_duration_seconds: float = 20.0,
         clock: Callable[[], datetime] | None = None,
     ) -> None:
         self.media = MediaTools(ffmpeg_bin=ffmpeg_bin, ffprobe_bin=ffprobe_bin)
         self.mixer = Mixer(self.media, mix_settings)
         self.output_dir = output_dir
         self.formats = normalize_formats(formats)
+        self.min_duration_seconds = min_duration_seconds
         self.clock = clock or datetime.now
 
     @property
     def tail_seconds(self) -> float:
         return self.mixer.settings.tail_seconds
+
+    def required_music_duration(self, speech_seconds: float) -> float:
+        """Целевая длительность трека: не меньше речи с хвостом и минимума."""
+        return max(speech_seconds + self.tail_seconds, self.min_duration_seconds)
 
     def render(self, request: AssemblyRequest) -> AssemblyResult:
         formats = normalize_formats(request.formats or self.formats)
@@ -66,10 +72,10 @@ class AssemblyService:
         except MediaError as exc:
             raise OutputWriteError(f"не удалось прочитать вход: {exc}") from exc
 
-        needed = speech_duration + self.tail_seconds
-        if music_duration + 0.05 < needed:
+        target_duration = self.required_music_duration(speech_duration)
+        if music_duration + 0.05 < target_duration:
             raise InsufficientMusicError(
-                f"музыка короче микса: {music_duration:.2f} с при нужных {needed:.2f} с"
+                f"музыка короче микса: {music_duration:.2f} с при нужных {target_duration:.2f} с"
             )
 
         target_dir = self._target_dir(request.subdir)
@@ -84,6 +90,7 @@ class AssemblyService:
                 master,
                 speech_duration=speech_duration,
                 music_duration=music_duration,
+                target_duration=target_duration,
             )
             for fmt in formats:
                 path = temporary_path(target_dir, f".{fmt}")

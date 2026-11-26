@@ -92,6 +92,7 @@ def main(argv: list[str] | None = None) -> int:
         ffprobe_bin=ffprobe_bin,
         output_dir=settings.output_dir,
         formats=settings.output_formats_list,
+        min_duration_seconds=settings.music_min_duration_seconds,
     )
     jobs = JobManager(
         JobDeps(

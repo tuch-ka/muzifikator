@@ -59,6 +59,7 @@ def _service(tmp_path, **kwargs) -> AssemblyService:
         "ffmpeg_bin": str(FFMPEG),
         "ffprobe_bin": str(FFPROBE),
         "output_dir": tmp_path / "out",
+        "min_duration_seconds": 1.0,
         "clock": lambda: FIXED_TIME,
     }
     params.update(kwargs)
@@ -166,6 +167,7 @@ def test_failed_encoding_leaves_no_files(tmp_path, inputs):
         ffmpeg_bin=str(FFMPEG),
         ffprobe_bin=str(FFPROBE),
         output_dir=tmp_path / "out",
+        min_duration_seconds=1.0,
         clock=lambda: FIXED_TIME,
     )
 

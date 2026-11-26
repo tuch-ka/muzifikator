@@ -44,9 +44,12 @@ class Mixer:
         *,
         speech_duration: float,
         music_duration: float,
+        target_duration: float | None = None,
     ) -> None:
         s = self.settings
-        needed = speech_duration + s.tail_seconds
+        needed = (
+            target_duration if target_duration is not None else speech_duration + s.tail_seconds
+        )
         if music_duration + DURATION_TOLERANCE < needed:
             raise InsufficientMusicError(
                 f"музыка короче микса: {music_duration:.2f} с при нужных {needed:.2f} с"
