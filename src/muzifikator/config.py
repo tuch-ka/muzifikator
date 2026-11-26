@@ -33,6 +33,10 @@ class Settings(BaseSettings):
     ffmpeg_bin: Path | None = None
     ffprobe_bin: Path | None = None
 
+    @property
+    def output_formats_list(self) -> tuple[str, ...]:
+        return tuple(part for part in self.output_formats.split(",") if part)
+
     @field_validator("output_formats")
     @classmethod
     def _validate_output_formats(cls, value: str) -> str:

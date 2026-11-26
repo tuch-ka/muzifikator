@@ -5,7 +5,7 @@ from __future__ import annotations
 import uuid
 from datetime import UTC, datetime
 
-from sqlalchemy import CheckConstraint, DateTime, Float, Index, Integer, String, Text
+from sqlalchemy import CheckConstraint, DateTime, Float, ForeignKey, Index, Integer, String, Text
 from sqlalchemy.engine import Dialect
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 from sqlalchemy.types import TypeDecorator
@@ -90,3 +90,17 @@ class Setting(Base):
     key: Mapped[str] = mapped_column(String(128), primary_key=True)
     value: Mapped[str] = mapped_column(Text, nullable=False)
     updated_at: Mapped[datetime] = mapped_column(UTCDateTime, nullable=False, default=utcnow)
+
+
+class GenerationFile(Base):
+    """Файл результата генерации: один формат — одна строка."""
+
+    __tablename__ = "generation_files"
+
+    generation_id: Mapped[str] = mapped_column(
+        String(32),
+        ForeignKey("generations.id", ondelete="CASCADE"),
+        primary_key=True,
+    )
+    format: Mapped[str] = mapped_column(String(8), primary_key=True)
+    path: Mapped[str] = mapped_column(Text, nullable=False)

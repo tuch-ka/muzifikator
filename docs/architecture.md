@@ -17,7 +17,7 @@ flowchart LR
     end
     UI["Web UI<br/>static HTML + JS"] --> API["FastAPI"]
     OPS["curl /health"] --> API
-    API --> JOB["JobManager<br/>single-flight"]
+    API --> JOB["JobManager<br/>single-flight, поток"]
     JOB --> SPEECH["SpeechService<br/>провайдер + кэш + ffmpeg"]
     SPEECH --> TTS["edge-tts"]
     SPEECH --> CACHE[(".cache/tts")]
@@ -26,7 +26,7 @@ flowchart LR
     MUS --- MEDIA["MediaTools<br/>ffmpeg/ffprobe"]
     JOB --> MIX["AssemblyService<br/>дакинг, фейды, экспорт"]
     MIX --> OUT["OUTPUT_DIR<br/>mp3 + m4a"]
-    API --> DB[("SQLite<br/>generations, settings")]
+    API --> DB[("SQLite<br/>generations, generation_files, settings")]
     ST --- DB
     PF -.->|"снимок версий"| API
 ```
@@ -82,6 +82,10 @@ sequenceDiagram
   Экспорт MP3 и M4A из WAV-мастера, запись атомарная, имена транслитерируются.
 - Preflight проверяет не только бинари, но и энкодеры `libmp3lame`/`aac`:
   сборка без них ломает старт, а не первую генерацию.
+- Генерация выполняется в отдельном потоке под `JobManager`: одна задача
+  одновременно, стадии `tts → music → mix` пишутся в базу до работы, результат
+  и файлы — в `generations`/`generation_files`. Поток `daemon`: остановка не ждёт
+  генерацию, а следующий старт помечает прерванные задачи `failed`.
 - Время в базе — naive UTC, на границе слоя превращается в aware-UTC
   (`UTCDateTime`); коммит транзакций — на вызывающей стороне.
 - Одна модель MusicGen в памяти, одна генерация одновременно.
