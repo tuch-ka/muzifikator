@@ -79,5 +79,6 @@ uv build
   поправить дельту или её синхронизацию.
 - «Не собирается wheel»: `uv build` локально; чаще это забытый новый модуль в
   пакете или ошибка импорта на верхнем уровне.
-- Проверить workflow без PR: `gh workflow run ci.yml --ref <branch>` и
-  `gh run watch`.
+- Ручной прогон после merge: `gh workflow run ci.yml` и `gh run watch`.
+  До merge `workflow_dispatch` недоступен: GitHub требует, чтобы файл workflow
+  был на default-ветке.
