@@ -14,6 +14,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session, sessionmaker
 
 from ..config import Settings
+from ..paths import project_root
 
 log = logging.getLogger(__name__)
 
@@ -22,14 +23,6 @@ _BUSY_TIMEOUT_MS = 5000
 
 class StorageError(RuntimeError):
     """Хранилище нельзя инициализировать: путь, права, миграции."""
-
-
-def project_root() -> Path:
-    """Корень репозитория: там лежат alembic.ini и migrations/."""
-    candidate = Path(__file__).resolve().parents[3]
-    if (candidate / "alembic.ini").is_file():
-        return candidate
-    return Path.cwd()
 
 
 def create_session_factory(engine: Engine) -> sessionmaker[Session]:

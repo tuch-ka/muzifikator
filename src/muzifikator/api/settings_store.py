@@ -4,15 +4,18 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Any
 
 from sqlalchemy.orm import Session, sessionmaker
 
 from ..assembly import normalize_formats
 from ..assembly.base import UnknownFormatError
+from ..paths import StorageDirError, expand, storage_dir
 from ..storage import MISSING, get_setting, set_setting
 
 SETTING_KEYS = (
+    "output_dir",
     "tts_voice",
     "music_tags",
     "rate_percent",
@@ -46,6 +49,7 @@ class SettingsStore:
     session_factory: sessionmaker[Session]
     default_music_tags: str
     default_formats: tuple[str, ...]
+    default_output_dir: Path
 
     def read(self) -> dict[str, Any]:
         with self.session_factory() as session:
@@ -61,6 +65,7 @@ class SettingsStore:
 
     def _read(self, session: Session) -> dict[str, Any]:
         defaults: dict[str, Any] = {
+            "output_dir": str(expand(self.default_output_dir)),
             "tts_voice": None,
             "music_tags": self.default_music_tags,
             "rate_percent": 0,
@@ -74,6 +79,9 @@ class SettingsStore:
             result[key] = defaults[key] if stored is MISSING else stored
         return result
 
+    def effective_output_dir(self) -> Path:
+        return Path(self.read()["output_dir"])
+
     def _validate(self, payload: Mapping[str, Any]) -> dict[str, Any]:
         validated: dict[str, Any] = {}
         for key, value in payload.items():
@@ -84,6 +92,11 @@ class SettingsStore:
 
 
 def _validate_value(key: str, value: Any) -> Any:
+    if key == "output_dir":
+        try:
+            return str(storage_dir(value))
+        except StorageDirError as exc:
+            raise InvalidSettingError(key, str(exc)) from exc
     if key == "tts_voice":
         return _non_empty_string(key, value)
     if key == "music_tags":

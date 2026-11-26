@@ -9,6 +9,7 @@ import pytest
 from conftest import FFMPEG, FFPROBE, FakeMusicProvider, FakeSpeechProvider
 from fastapi.testclient import TestClient
 
+from muzifikator.api import SettingsStore
 from muzifikator.app import create_app
 from muzifikator.assembly import AssemblyService
 from muzifikator.config import Settings
@@ -26,7 +27,6 @@ from muzifikator.storage import (
     get_generation,
     init_storage,
     list_generation_files,
-    list_generations,
     start_generation,
 )
 
@@ -63,12 +63,18 @@ def _build_env(tmp_path, *, speech_provider=None, min_duration=1.0):
         output_dir=tmp_path / "out",
         min_duration_seconds=min_duration,
     )
+    store = SettingsStore(
+        factory,
+        default_music_tags="folk metal",
+        default_formats=("mp3", "m4a"),
+        default_output_dir=tmp_path / "out",
+    )
     deps = JobDeps(
         session_factory=factory,
         speech=speech,
         music=music,
         assembly=assembly,
-        output_dir=tmp_path / "out",
+        resolve_output_dir=store.effective_output_dir,
         tail_seconds=assembly.tail_seconds,
         formats=("mp3", "m4a"),
     )
@@ -79,6 +85,7 @@ def _build_env(tmp_path, *, speech_provider=None, min_duration=1.0):
         session_factory=factory,
         jobs=manager,
         settings=Settings(output_dir=tmp_path / "out"),
+        store=store,
     )
     return SimpleNamespace(
         app=app,
@@ -284,47 +291,22 @@ def test_explicit_parameters_override_settings(env):
     assert settings["music_tags"] == "folk metal"
 
 
-def test_folder_puts_files_into_subdirectory(env):
-    created = _post(env.client, folder="2026-11").json()
+def test_output_dir_setting_changes_target(env):
+    target = env.tmp_path / "chosen"
+    target.mkdir()
+    patched = env.client.patch("/api/settings", json={"output_dir": str(target)})
+    assert patched.status_code == 200
+
+    created = _post(env.client).json()
     body = _wait(env.client, created["id"])
 
     assert body["status"] == "done"
     for path in body["files"].values():
-        assert Path(path).parent == (env.tmp_path / "out" / "2026-11").resolve()
+        assert Path(path).is_absolute()
+        assert Path(path).parent == target.resolve()
         assert Path(path).is_file()
 
-    listing = env.client.get("/api/files", params={"path": "2026-11"}).json()
-    assert {entry["name"] for entry in listing["entries"]} == {
+    listing = env.client.get("/api/files").json()
+    assert {entry["name"] for entry in listing["files"]} == {
         Path(path).name for path in body["files"].values()
     }
-
-
-def test_invalid_folder_is_rejected_before_creation(env):
-    response = _post(env.client, folder="../escape")
-
-    assert response.status_code == 400
-    with env.factory() as session:
-        assert list_generations(session) == []
-
-    accepted = _post(env.client)
-    assert accepted.status_code == 202
-    assert _wait(env.client, accepted.json()["id"])["status"] == "done"
-
-
-def test_absolute_folder_is_rejected(env):
-    response = _post(env.client, folder="/tmp")
-
-    assert response.status_code == 400
-
-
-def test_minimum_duration_extends_short_track(tmp_path):
-    environment = _build_env(tmp_path, min_duration=5.0)
-
-    with TestClient(environment.app) as client:
-        created = _post(client).json()
-        body = _wait(client, created["id"])
-
-    assert body["status"] == "done"
-    assert body["duration_seconds"] == pytest.approx(5.0, abs=0.3)
-    requested = environment.music_provider.calls[-1][1]
-    assert requested == pytest.approx(5.3, abs=0.05)

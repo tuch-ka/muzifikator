@@ -25,8 +25,19 @@ def test_index_page_served(tmp_path):
     assert response.status_code == 200
     assert response.headers["content-type"].startswith("text/html")
     html = response.text
-    for element_id in ("generation-form", "text", "voice", "tags", "folder"):
+    for element_id in (
+        "generation-form",
+        "text",
+        "voice",
+        "tags",
+        "storage-path",
+        "storage-browser",
+        "browser-list",
+        "player",
+        "files-list",
+    ):
         assert f'id="{element_id}"' in html
+    assert 'id="folder"' not in html
     assert "/static/app.js" in html
     assert "/static/style.css" in html
 
@@ -46,7 +57,8 @@ def test_static_assets_served(tmp_path):
 
     assert script.status_code == 200
     assert "javascript" in script.headers["content-type"]
-    assert "fetch(" in script.text
+    for marker in ("/api/files", "/api/storage/browse", "/media", "/reveal", "DELETE"):
+        assert marker in script.text
     assert styles.status_code == 200
     assert "text/css" in styles.headers["content-type"]
 

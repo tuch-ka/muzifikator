@@ -1,7 +1,16 @@
 """Хранилище: модели, движок и операции доступа к данным."""
 
 from .db import StorageError, create_db_engine, create_session_factory, init_storage
-from .models import STAGES, STATUSES, Base, Generation, Setting, new_id, utcnow
+from .models import (
+    STAGES,
+    STATUSES,
+    Base,
+    Generation,
+    GenerationFile,
+    Setting,
+    new_id,
+    utcnow,
+)
 from .repo import (
     MISSING,
     GenerationNotFoundError,
@@ -12,6 +21,7 @@ from .repo import (
     fail_stale_generations,
     finish_generation,
     get_generation,
+    get_generation_file,
     get_generation_files,
     get_setting,
     list_generation_files,
@@ -40,6 +50,7 @@ __all__ = [
     "fail_generation",
     "finish_generation",
     "get_generation",
+    "get_generation_file",
     "get_generation_files",
     "get_setting",
     "list_generation_files",
