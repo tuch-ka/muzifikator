@@ -22,12 +22,13 @@ Issue не заводится заранее: он появляется вмес
 | 2 | Хранилище: SQLite, Alembic, таблицы `generations` и `settings` | `add-storage-migrations` | `generation-history`, `persisted-settings`, `storage-schema` | #2 | done |
 | 3 | Озвучка: абстракция провайдера, edge-tts как первый, список голосов, длительность, кэш, «рык» | `add-tts` | `speech-synthesis` | #3 | done |
 | 4 | Музыка: MusicGen из transformers, seed, сегменты, теги | `add-music-generation` | `music-generation` | #4 | done |
-| 5 | Микс и экспорт: дакинг, фейды, mp3/m4a, имена файлов | `add-audio-mix` | `audio-assembly`, `output-files` | — | planned |
-| 6 | Задачи: single-flight, стадии, polling, запись в БД | `add-job-orchestration` | `generation-jobs` | — | planned |
-| 7 | API файлов и настроек: корни, листинг, сохранение настроек | `add-fs-and-settings-api` | `web-interface` | — | planned |
-| 8 | UI: два поля, предзаполненные теги, перегенерация, папка, прогресс | `add-web-ui` | `web-interface` | — | planned |
-| 9 | Провайдеры TTS: второй локальный провайдер (Piper), выбор провайдера в UI, ошибки провайдера | `add-tts-provider-switch` | `tts-providers` (new), `speech-synthesis` (mod), `web-interface` (mod) | — | planned |
-| 10 | Тесты, README, лицензионные примечания | `add-tests-and-docs` | `skip_specs: true` | — | planned |
+| 5 | CI: GitHub Actions — ruff, ruff format, pytest, openspec validate на PR | `add-ci` | `skip_specs: true` | — | planned |
+| 6 | Микс и экспорт: дакинг, фейды, mp3/m4a, имена файлов | `add-audio-mix` | `audio-assembly`, `output-files` | — | planned |
+| 7 | Задачи: single-flight, стадии, polling, запись в БД | `add-job-orchestration` | `generation-jobs` | — | planned |
+| 8 | API файлов и настроек: корни, листинг, сохранение настроек | `add-fs-and-settings-api` | `web-interface` | — | planned |
+| 9 | UI: два поля, предзаполненные теги, перегенерация, папка, прогресс | `add-web-ui` | `web-interface` | — | planned |
+| 10 | Провайдеры TTS: второй локальный провайдер (Piper), выбор провайдера в UI, ошибки провайдера | `add-tts-provider-switch` | `tts-providers` (new), `speech-synthesis` (mod), `web-interface` (mod) | — | planned |
+| 11 | Тесты, README, лицензионные примечания | `add-tests-and-docs` | `skip_specs: true` | — | planned |
 
 ## Отложено до востребования
 
