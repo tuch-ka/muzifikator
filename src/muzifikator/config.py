@@ -2,6 +2,7 @@
 
 from pathlib import Path
 
+from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -18,5 +19,7 @@ class Settings(BaseSettings):
     port: int = 8000
     log_level: str = "INFO"
     db_path: Path = Path("data/muzifikator.sqlite3")
+    tts_cache_dir: Path = Path(".cache/tts")
+    tts_cache_limit_mib: int = Field(default=200, ge=0)
     ffmpeg_bin: Path | None = None
     ffprobe_bin: Path | None = None

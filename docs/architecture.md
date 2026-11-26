@@ -18,19 +18,21 @@ flowchart LR
     UI["Web UI<br/>static HTML + JS"] --> API["FastAPI"]
     OPS["curl /health"] --> API
     API --> JOB["JobManager<br/>single-flight"]
-    JOB --> TTS["edge-tts"]
+    JOB --> SPEECH["SpeechService<br/>провайдер + кэш + ffmpeg"]
+    SPEECH --> TTS["edge-tts"]
+    SPEECH --> CACHE[(".cache/tts")]
     JOB --> MUS["MusicGen<br/>transformers"]
     JOB --> MIX["ffmpeg<br/>mix, ducking, fades"]
     MIX --> OUT["выходной каталог<br/>файловая система"]
     API --> DB[("SQLite<br/>generations, settings")]
     ST --- DB
     MUS --> MODELS[("models/")]
-    TTS --> CACHE[(".cache/tts")]
     PF -.->|"снимок версий"| API
 ```
 
-Сейчас реализованы конфиг, preflight, инициализация хранилища (миграции,
-`storage/`) и `GET /api/health`. Остальные компоненты — план последующих фаз.
+Сейчас реализованы конфиг, preflight, хранилище (`storage/`), слой речи
+(`speech/`: провайдер edge-tts, кэш, ffmpeg-обработка) и `GET /api/health`.
+Очередь задач, музыка, микс и UI — план последующих фаз.
 
 ## Поток генерации
 
@@ -66,6 +68,10 @@ sequenceDiagram
   только сериализует, внешние процессы на запросах не запускаются.
 - Хранилище — SQLite с WAL, синхронный SQLAlchemy 2.0; схема приводится к
   последней ревизии Alembic при старте, `create_all` не используется.
+- Речь синтезируется синхронным слоем: провайдер за протоколом (сейчас
+  edge-tts), кэш в `.cache/tts` с ключом по тексту и параметрам и лимитом в
+  МиБ, длительность — по `ffprobe`, «рык» — ffmpeg-фильтр с сохранением
+  длительности.
 - Время в базе — naive UTC, на границе слоя превращается в aware-UTC
   (`UTCDateTime`); коммит транзакций — на вызывающей стороне.
 - Одна модель MusicGen в памяти, одна генерация одновременно.
