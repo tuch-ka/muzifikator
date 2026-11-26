@@ -67,6 +67,18 @@ uv run pytest
 
 Те же шаги выполняет GitHub Actions на каждый PR; подробности — в `docs/ci.md`.
 
+## Генерация
+
+```
+curl -s -X POST localhost:8000/api/generations \
+  -H 'content-type: application/json' \
+  -d '{"text":"Текст сообщения","voice":"ru-RU-DmitryNeural"}'
+curl -s localhost:8000/api/generations/<id>
+```
+
+Одна генерация одновременно; готовые файлы — в `out/`. Подробности и коды
+ошибок — в `docs/operations.md`.
+
 ## Статус
 
 Проект в разработке. План и задачи — в OpenSpec change.

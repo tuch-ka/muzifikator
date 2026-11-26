@@ -74,6 +74,8 @@ uv build
 | Require status checks | `checks`, устаревшие ветки запрещены (`strict`) |
 | Force pushes, deletions | запрещены |
 | Do not allow bypassing (enforce admins) | **выключено** — мягкий режим |
+| Auto-merge | включено: PR мержится сам при зелёном `checks` |
+| Delete branch on merge | включено |
 
 `enforce_admins` выключен намеренно: правки процесса и `docs/` без change
 коммитятся прямо в `main` (`AGENTS.md`). GitHub такой push пропустит, но

@@ -3,11 +3,12 @@
 from __future__ import annotations
 
 import json
+from pathlib import Path
 from typing import Any
 
 from sqlalchemy.orm import Session
 
-from .models import STAGES, Generation, Setting, new_id, utcnow
+from .models import STAGES, Generation, GenerationFile, Setting, new_id, utcnow
 
 MISSING = object()
 """Признак отсутствия настройки, когда значение по умолчанию не передано."""
@@ -29,9 +30,10 @@ def create_generation(
     voice: str | None = None,
     music_tags: str | None = None,
     music_seed: int | None = None,
+    generation_id: str | None = None,
 ) -> Generation:
     generation = Generation(
-        id=new_id(),
+        id=generation_id or new_id(),
         created_at=utcnow(),
         text=text,
         tts_provider=tts_provider,
@@ -110,6 +112,43 @@ def list_generations(session: Session, *, limit: int = 50) -> list[Generation]:
     if limit < 1:
         raise ValueError("limit должен быть положительным")
     return list(session.query(Generation).order_by(Generation.created_at.desc()).limit(limit))
+
+
+def add_generation_file(
+    session: Session, generation_id: str, *, format: str, path: str
+) -> GenerationFile:
+    row = session.get(GenerationFile, (generation_id, format))
+    if row is None:
+        row = GenerationFile(generation_id=generation_id, format=format, path=path)
+        session.add(row)
+    else:
+        row.path = path
+    session.flush()
+    return row
+
+
+def list_generation_files(session: Session, generation_id: str) -> list[GenerationFile]:
+    return list(
+        session.query(GenerationFile)
+        .filter(GenerationFile.generation_id == generation_id)
+        .order_by(GenerationFile.format)
+    )
+
+
+def get_generation_files(session: Session, generation_id: str) -> dict[str, Path]:
+    return {row.format: Path(row.path) for row in list_generation_files(session, generation_id)}
+
+
+def fail_stale_generations(session: Session, *, reason: str) -> int:
+    """Перевести все running в failed: задача прервана перезапуском."""
+    stale = session.query(Generation).filter(Generation.status == "running").all()
+    for generation in stale:
+        generation.status = "failed"
+        generation.finished_at = utcnow()
+        generation.error = reason
+    if stale:
+        session.flush()
+    return len(stale)
 
 
 def set_setting(session: Session, key: str, value: Any) -> Setting:
