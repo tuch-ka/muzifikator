@@ -134,20 +134,24 @@ torch = [{ index = "pytorch-cpu", marker = "sys_platform == 'linux'" }]
 
 ### 7. OpenSpec в CI
 
-`actions/setup-node` с Node 20, затем
+`actions/setup-node` с Node 22 (OpenSpec требует `>= 22.20`), затем
 `npm install -g @fission-ai/openspec@2.1.1` — версия совпадает с локальной.
-Проверки:
+Проверка спек:
 
 ```
 openspec validate --specs
-openspec list --json | jq -r '.changes[].name' | xargs -r -n1 openspec validate --strict
 ```
 
-Активных change может не быть — `xargs -r` это допускает. Архивные change не
-валидируются: они исторические.
+**Дельты активных change в CI не проверяются.** Схема `taxmonitor` подключена
+симлинком в `~/zakharov-llm` (`CONSTITUTION.md` п. 6.1) и не копируется в
+репозиторий, поэтому на раннере `openspec validate <change>` падает с
+`unknown schema 'taxmonitor'`. Первый прогон CI это подтвердил. Дельты
+валидируются локально и на `openspec archive`; если понадобится проверять их в
+CI, нужно решение владельца о том, как доставлять схему в раннер (вендоринг
+схемы меняет конституцию).
 
-Альтернатива: не проверять спеки в CI — экономит минуту, но тогда расхождение
-дельты и `openspec/specs` ловится только на архивации.
+Альтернатива: не проверять спеки в CI вовсе — тогда даже основные спеки
+остаются без автоматической проверки.
 
 ### 8. Сборка и установка wheel
 

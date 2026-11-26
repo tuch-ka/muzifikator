@@ -21,7 +21,7 @@
 
 ## 4. Workflow: спеки и сборка
 
-- [x] 4.1 Добавить шаги `actions/setup-node` (Node 20) и `npm install -g @fission-ai/openspec@2.1.1`, затем `openspec validate --specs` и валидацию активных change через `openspec list --json | jq -r '.changes[].name' | xargs -r -n1 openspec validate --strict`; проверить команды локально, включая случай без активных change
+- [x] 4.1 Добавить шаги `actions/setup-node` (Node 22) и `npm install -g @fission-ai/openspec@2.1.1`, затем `openspec validate --specs`; проверить команды локально. Дельты активных change в CI не проверяются: схема `taxmonitor` — внешний симлинк, на раннере недоступна (выяснено первым прогоном)
 - [x] 4.2 Добавить шаг `uv build` и проверку установки: `uv venv .wheelcheck`, `uv pip install --python .wheelcheck/bin/python dist/*.whl`, импорт `muzifikator`; проверить локально, а `.wheelcheck` и `dist` добавить в `.gitignore`
 
 ## 5. Проверка workflow

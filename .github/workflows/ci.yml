@@ -21,10 +21,10 @@ jobs:
     timeout-minutes: 20
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Set up uv
-        uses: astral-sh/setup-uv@v6
+        uses: astral-sh/setup-uv@v7
         with:
           enable-cache: true
 
@@ -51,15 +51,14 @@ jobs:
         run: uv run --no-sync pytest
 
       - name: Set up Node for OpenSpec
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v5
         with:
-          node-version: 20
+          node-version: 22
 
       - name: Validate specs
         run: |
           npm install -g @fission-ai/openspec@2.1.1
           openspec validate --specs
-          openspec list --json | jq -r '.changes[].name' | xargs -r -n1 openspec validate --strict
 
       - name: Build wheel
         run: uv build

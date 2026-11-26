@@ -12,7 +12,7 @@
 | Формат | `uv run ruff format --check .` | неотформатированный код |
 | Типы | `uv run mypy` | ошибки типизации в `src/muzifikator` |
 | Тесты | `uv run pytest` | регрессии; `network` и `model` исключены |
-| Спеки | `openspec validate --specs` и `--strict` по активным change | расхождение дельт и основных спек |
+| Спеки | `openspec validate --specs` | ошибки в основных спеках |
 | Сборка | `uv build` + установка wheel в отдельное окружение | пакет не собирается или не импортируется |
 
 Запускается на `pull_request` в `main`, на `push` в `main` и вручную
@@ -27,7 +27,6 @@ uv run ruff format --check .
 uv run mypy
 uv run pytest
 openspec validate --specs
-openspec list --json | jq -r '.changes[].name' | xargs -r -n1 openspec validate --strict
 uv build
 ```
 
@@ -38,6 +37,9 @@ uv build
 
 - Модельных и сетевых тестов: веса ~2,2 ГБ и минуты времени.
 - Проверки типов тестов: `mypy` настроен только на `src/muzifikator`.
+- Валидации дельт активных change: схема `taxmonitor` подключена симлинком из
+  внешнего стора (`CONSTITUTION.md` п. 6.1) и на раннере недоступна. Дельты
+  проверяются локально и на `openspec archive`.
 - Типов `torch`/`transformers`: пакеты в CI не установлены, для них включён
   `ignore_missing_imports`; вызовы модели типизируются как `Any` внутри
   `music/backend.py`.
@@ -75,8 +77,9 @@ uv build
 
 - Упавший шаг: Actions → нужный run → шаг; логи доступны без скачивания.
 - Расхождение lockfile: локально `uv lock`, закоммитить `uv.lock`.
-- Упала валидация спек: `openspec validate <change> --strict` локально,
-  поправить дельту или её синхронизацию.
+- Упала валидация спек: `openspec validate --specs` локально; дельты активных
+  change проверяются отдельно — `openspec validate <change> --strict` (в CI они
+  не проверяются, см. выше).
 - «Не собирается wheel»: `uv build` локально; чаще это забытый новый модуль в
   пакете или ошибка импорта на верхнем уровне.
 - Ручной прогон после merge: `gh workflow run ci.yml` и `gh run watch`.
