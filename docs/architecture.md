@@ -21,18 +21,20 @@ flowchart LR
     JOB --> SPEECH["SpeechService<br/>провайдер + кэш + ffmpeg"]
     SPEECH --> TTS["edge-tts"]
     SPEECH --> CACHE[(".cache/tts")]
-    JOB --> MUS["MusicGen<br/>transformers"]
+    JOB --> MUS["MusicService<br/>MusicGen + сегменты"]
+    MUS --- WEIGHTS[("models/")]
+    MUS --- MEDIA["MediaTools<br/>ffmpeg/ffprobe"]
     JOB --> MIX["ffmpeg<br/>mix, ducking, fades"]
     MIX --> OUT["выходной каталог<br/>файловая система"]
     API --> DB[("SQLite<br/>generations, settings")]
     ST --- DB
-    MUS --> MODELS[("models/")]
     PF -.->|"снимок версий"| API
 ```
 
 Сейчас реализованы конфиг, preflight, хранилище (`storage/`), слой речи
-(`speech/`: провайдер edge-tts, кэш, ffmpeg-обработка) и `GET /api/health`.
-Очередь задач, музыка, микс и UI — план последующих фаз.
+(`speech/`: провайдер edge-tts, кэш, рык) и слой музыки (`music/`: MusicGen,
+сегменты с кроссфейдом, общий `media.py` для ffmpeg). Очередь задач, микс и UI —
+план последующих фаз.
 
 ## Поток генерации
 
@@ -72,6 +74,9 @@ sequenceDiagram
   edge-tts), кэш в `.cache/tts` с ключом по тексту и параметрам и лимитом в
   МиБ, длительность — по `ffprobe`, «рык» — ffmpeg-фильтр с сохранением
   длительности.
+- Музыка — MusicGen на MPS в `float32`, окно 30 с, длиннее — сегменты с
+  кроссфейдом 2 с; seed воспроизводит трек в пределах одного окружения; кэша
+  музыки нет; ffmpeg-операции общие с речью (`media.py`).
 - Время в базе — naive UTC, на границе слоя превращается в aware-UTC
   (`UTCDateTime`); коммит транзакций — на вызывающей стороне.
 - Одна модель MusicGen в памяти, одна генерация одновременно.
