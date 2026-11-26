@@ -9,10 +9,10 @@ from pydantic import BaseModel, Field, field_validator
 
 class GenerationCreate(BaseModel):
     text: str = Field(min_length=1)
-    voice: str = Field(min_length=1)
-    rate_percent: int = Field(default=0, ge=-100, le=200)
-    pitch_hz: int = Field(default=0, ge=-100, le=100)
-    growl: bool = False
+    voice: str | None = Field(default=None, min_length=1)
+    rate_percent: int | None = Field(default=None, ge=-100, le=200)
+    pitch_hz: int | None = Field(default=None, ge=-100, le=100)
+    growl: bool | None = None
     music_tags: str | None = None
     music_seed: int | None = Field(default=None, ge=0)
     formats: list[str] | None = None

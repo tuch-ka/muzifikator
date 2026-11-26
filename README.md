@@ -76,8 +76,10 @@ curl -s -X POST localhost:8000/api/generations \
 curl -s localhost:8000/api/generations/<id>
 ```
 
-Одна генерация одновременно; готовые файлы — в `out/`. Подробности и коды
-ошибок — в `docs/operations.md`.
+Одна генерация одновременно; готовые файлы — в `out/`. Список файлов и
+настройки — `GET /api/files` и `GET`/`PATCH /api/settings` (голос и теги можно
+сохранить и не передавать в каждом запросе). Подробности и коды ошибок — в
+`docs/operations.md`.
 
 ## Статус
 
