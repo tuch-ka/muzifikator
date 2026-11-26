@@ -15,9 +15,30 @@ def _write_binary(directory, name: str, body: str):
     return path
 
 
+def _write_ffmpeg(
+    directory,
+    name: str = "ffmpeg",
+    *,
+    version_line: str = "ffmpeg version 7.1 Copyright",
+    encoders: tuple[str, ...] = ("libmp3lame", "aac"),
+):
+    encoders_body = "".join(f'  printf " A....D {encoder}  codec\\n"\n' for encoder in encoders)
+    body = (
+        'case "$*" in\n'
+        "  *-encoders*)\n"
+        f"{encoders_body}"
+        "    ;;\n"
+        "  *)\n"
+        f'    echo "{version_line}"\n'
+        "    ;;\n"
+        "esac\n"
+    )
+    return _write_binary(directory, name, body)
+
+
 @pytest.fixture
 def fake_bins(tmp_path):
-    ffmpeg = _write_binary(tmp_path, "ffmpeg", 'echo "ffmpeg version 7.1 Copyright"\n')
+    ffmpeg = _write_ffmpeg(tmp_path)
     ffprobe = _write_binary(tmp_path, "ffprobe", 'echo "ffprobe version 7.1 Copyright"\n')
     return ffmpeg, ffprobe
 
@@ -76,7 +97,7 @@ def test_binary_not_in_path_and_not_configured(monkeypatch):
 
 def test_version_unknown_keeps_binary_available(fake_bins):
     ffmpeg, _ = fake_bins
-    odd = _write_binary(ffmpeg.parent, "odd", 'echo "no version line here"\n')
+    odd = _write_ffmpeg(ffmpeg.parent, "odd", version_line="no version line here")
     result = preflight.run_preflight(Settings(ffmpeg_bin=odd, ffprobe_bin=ffmpeg))
 
     assert result.ok

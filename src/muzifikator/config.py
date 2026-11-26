@@ -3,8 +3,10 @@
 from pathlib import Path
 from typing import Literal
 
-from pydantic import Field
+from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+SUPPORTED_OUTPUT_FORMATS = ("mp3", "m4a")
 
 
 class Settings(BaseSettings):
@@ -26,5 +28,21 @@ class Settings(BaseSettings):
     music_models_dir: Path = Path("models")
     music_prompt: str = "folk metal"
     music_device: Literal["auto", "mps", "cpu"] = "auto"
+    output_dir: Path = Path("out")
+    output_formats: str = "mp3,m4a"
     ffmpeg_bin: Path | None = None
     ffprobe_bin: Path | None = None
+
+    @field_validator("output_formats")
+    @classmethod
+    def _validate_output_formats(cls, value: str) -> str:
+        parts = [part.strip().lower() for part in value.split(",") if part.strip()]
+        unknown = sorted(set(parts) - set(SUPPORTED_OUTPUT_FORMATS))
+        if unknown:
+            raise ValueError(
+                f"неизвестные форматы: {', '.join(unknown)}; "
+                f"допустимы: {', '.join(SUPPORTED_OUTPUT_FORMATS)}"
+            )
+        if not parts:
+            raise ValueError("нужен хотя бы один формат вывода")
+        return ",".join(dict.fromkeys(parts))
