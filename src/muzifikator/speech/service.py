@@ -14,6 +14,7 @@ from .base import (
     SpeechProvider,
     SynthesisRequest,
     SynthesisResult,
+    Voice,
 )
 
 log = logging.getLogger(__name__)
@@ -90,7 +91,7 @@ class SpeechService:
             growl=request.growl,
         )
 
-    def list_voices(self):
+    def list_voices(self) -> list[Voice]:
         return self.provider.list_voices()
 
     def _synthesize_chunks(

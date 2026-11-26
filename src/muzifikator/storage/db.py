@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import logging
 from pathlib import Path
+from typing import Any
 
 from alembic import command
 from alembic.config import Config
@@ -43,7 +44,7 @@ def create_db_engine(db_path: Path) -> Engine:
     )
 
     @event.listens_for(engine, "connect")
-    def _apply_pragmas(dbapi_connection, _connection_record) -> None:
+    def _apply_pragmas(dbapi_connection: Any, _connection_record: Any) -> None:
         cursor = dbapi_connection.cursor()
         cursor.execute("PRAGMA journal_mode=WAL")
         cursor.execute("PRAGMA foreign_keys=ON")

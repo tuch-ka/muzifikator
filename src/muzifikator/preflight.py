@@ -73,13 +73,13 @@ def format_failure(result: PreflightResult) -> str:
 
 def _check_binary(name: str, configured: Path | None) -> BinaryStatus:
     path, resolution_error = _resolve_path(name, configured)
-    if resolution_error is not None:
+    if resolution_error is not None or path is None:
         log.warning("preflight %s: %s", name, resolution_error)
         return BinaryStatus(
             name=name,
             available=False,
             path=str(configured) if configured is not None else None,
-            error=resolution_error,
+            error=resolution_error or "путь к бинарю не определён",
         )
     return _probe_version(name, path)
 

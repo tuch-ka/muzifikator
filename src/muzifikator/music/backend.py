@@ -1,13 +1,17 @@
-"""Бэкенд MusicGen: ленивая загрузка модели и генерация сегмента."""
+"""Бэкенд MusicGen: ленивая загрузка модели и генерация сегмента.
+
+`torch` и `transformers` импортируются внутри методов: пакет `muzifikator.music`
+должен импортироваться в окружении без этих тяжёлых зависимостей (CI ставит
+проект с `--no-install-package torch`).
+"""
 
 from __future__ import annotations
 
 import logging
 from pathlib import Path
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
-import torch
-from transformers import AutoProcessor, MusicgenForConditionalGeneration
 
 from .base import (
     MODEL_SAMPLE_RATE,
@@ -15,6 +19,9 @@ from .base import (
     MusicModelError,
     MusicResourceError,
 )
+
+if TYPE_CHECKING:
+    from transformers import MusicgenForConditionalGeneration
 
 log = logging.getLogger(__name__)
 
@@ -33,7 +40,7 @@ class TransformersBackend:
         self.models_dir = models_dir
         self.requested_device = device
         self._model: MusicgenForConditionalGeneration | None = None
-        self._processor = None
+        self._processor: Any | None = None
         self._device: str | None = None
 
     @property
@@ -45,13 +52,14 @@ class TransformersBackend:
     def load(self) -> None:
         if self._model is not None:
             return
+        torch, auto_processor, model_class = _import_ml()
         self.models_dir.mkdir(parents=True, exist_ok=True)
         log.info("музыка: загрузка модели %s на %s", self.model_name, self.device)
         try:
-            self._processor = AutoProcessor.from_pretrained(
+            self._processor = auto_processor.from_pretrained(
                 self.model_name, cache_dir=str(self.models_dir)
             )
-            self._model = MusicgenForConditionalGeneration.from_pretrained(
+            self._model = model_class.from_pretrained(
                 self.model_name,
                 cache_dir=str(self.models_dir),
                 dtype=torch.float32,
@@ -65,6 +73,7 @@ class TransformersBackend:
 
     def generate(self, *, prompt: str, seconds: float, seed: int) -> np.ndarray:
         self.load()
+        torch, _auto_processor, _model_class = _import_ml()
         assert self._processor is not None and self._model is not None
         tokens = max(
             TOKENS_PER_SECOND,
@@ -73,16 +82,17 @@ class TransformersBackend:
         log.info("музыка: сегмент %.1f с, seed %d, токенов %d", seconds, seed, tokens)
         try:
             inputs = self._processor(text=[prompt], padding=True, return_tensors="pt")
-            inputs = {name: value.to(self.device) for name, value in inputs.items()}
+            moved = {name: value.to(self.device) for name, value in inputs.items()}
             torch.manual_seed(seed)
             with torch.inference_mode():
                 audio = self._model.generate(
-                    **inputs,
+                    **moved,
                     do_sample=True,
                     guidance_scale=GUIDANCE_SCALE,
                     max_new_tokens=tokens,
                 )
-            return audio[0, 0].to("cpu").numpy().astype(np.float32)
+            samples: np.ndarray = audio[0, 0].to("cpu").numpy().astype(np.float32)
+            return samples
         except RuntimeError as exc:
             message = str(exc).lower()
             if any(marker in message for marker in _MEMORY_MARKERS):
@@ -100,4 +110,17 @@ class TransformersBackend:
     def _resolve_device(self) -> str:
         if self.requested_device != "auto":
             return self.requested_device
+        torch, _auto_processor, _model_class = _import_ml()
         return "mps" if torch.backends.mps.is_available() else "cpu"
+
+
+def _import_ml() -> tuple[Any, Any, Any]:
+    """Импортировать тяжёлые зависимости с понятной ошибкой при их отсутствии."""
+    try:
+        import torch
+        from transformers import AutoProcessor, MusicgenForConditionalGeneration
+    except ImportError as exc:
+        raise MusicModelError(
+            "для генерации музыки нужны torch и transformers; установите их через `uv sync`"
+        ) from exc
+    return torch, AutoProcessor, MusicgenForConditionalGeneration

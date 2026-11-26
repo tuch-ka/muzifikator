@@ -44,11 +44,17 @@
   1. `git push -u origin MUZ-<issue>-<change>`;
   2. `gh pr create` в `main`: заголовок `MUZ-<issue>: <change>`, в теле — фаза,
      issue, change, спеки и результат проверок; ссылка на issue — `Refs #<issue>`;
-  3. **слияние делает владелец** — вручную в GitHub или явной командой
-     («мержить»), тогда `gh pr merge --merge --delete-branch`. Автоматического
-     merge, авто-merge и squash/rebase нет: merge-коммит сохраняет историю фазы;
-  4. после merge — `git switch main && git pull`, локальную ветку удалить
-     (`git branch -d`), если она осталась.
+  3. **слияние — по команде владельца** после его ревью PR: «ок», «мержить» и
+     равнозначные. Перед merge показывается состояние PR: checks, mergeable и
+     коммиты. Merge выполняется только при зелёных checks и без конфликтов:
+     `gh pr merge <n> --merge --delete-branch`. Автоматического merge,
+     авто-merge и squash/rebase нет: merge-коммит сохраняет историю фазы;
+  4. после merge — `git switch main && git pull --ff-only`, `git fetch --prune`,
+     `git branch -d MUZ-<issue>-<change>`; затем проверить `main`: чистое дерево,
+     `openspec list` без активных change, `openspec validate --specs`;
+  5. дождаться прогона `CI` на `push` в `main`. Красный прогон — сразу завести
+     GitHub issue на фикс с упавшим шагом и логом, фазу не считать закрытой;
+     молча ничего не доделывать.
 - **`Closes #<issue>` в коммитах не использовать**: GitHub закрыл бы issue при
   merge, а по процессу issue закрывается на архивации. В коде — `Refs #<issue>`.
 - **Исключение — коммиты без change**: правки процесса, `docs/`, README-опечатки,

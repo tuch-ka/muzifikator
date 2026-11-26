@@ -10,6 +10,9 @@
 3. Создаём change с указанным именем; proposal ссылается на issue.
 4. При архивации change закрываем issue и обновляем `docs/`.
 5. Статус в таблице меняем здесь же, в том же коммите.
+6. Владелец ревьюит PR; по команде «мержить» — merge с удалением ветки, затем
+   проверка `main` (спеки, прогон CI); красный `main` закрывается отдельным
+   issue на фикс.
 
 Issue не заводится заранее: он появляется вместе с проработкой идеи, а не
 копится списком.
@@ -22,13 +25,14 @@ Issue не заводится заранее: он появляется вмес
 | 2 | Хранилище: SQLite, Alembic, таблицы `generations` и `settings` | `add-storage-migrations` | `generation-history`, `persisted-settings`, `storage-schema` | #2 | done |
 | 3 | Озвучка: абстракция провайдера, edge-tts как первый, список голосов, длительность, кэш, «рык» | `add-tts` | `speech-synthesis` | #3 | done |
 | 4 | Музыка: MusicGen из transformers, seed, сегменты, теги | `add-music-generation` | `music-generation` | #4 | done |
-| 5 | CI: GitHub Actions — ruff, ruff format, pytest, openspec validate на PR | `add-ci` | `skip_specs: true` | — | planned |
+| 5 | CI и типы: GitHub Actions — ruff, mypy (strict по `src`), pytest, openspec validate, build | `add-ci` | `skip_specs: true` | #5 | done |
 | 6 | Микс и экспорт: дакинг, фейды, mp3/m4a, имена файлов | `add-audio-mix` | `audio-assembly`, `output-files` | — | planned |
 | 7 | Задачи: single-flight, стадии, polling, запись в БД | `add-job-orchestration` | `generation-jobs` | — | planned |
 | 8 | API файлов и настроек: корни, листинг, сохранение настроек | `add-fs-and-settings-api` | `web-interface` | — | planned |
 | 9 | UI: два поля, предзаполненные теги, перегенерация, папка, прогресс | `add-web-ui` | `web-interface` | — | planned |
 | 10 | Провайдеры TTS: второй локальный провайдер (Piper), выбор провайдера в UI, ошибки провайдера | `add-tts-provider-switch` | `tts-providers` (new), `speech-synthesis` (mod), `web-interface` (mod) | — | planned |
 | 11 | Тесты, README, лицензионные примечания | `add-tests-and-docs` | `skip_specs: true` | — | planned |
+| 12 | Оценка CI: замеры, кэш apt, параллельные job'ы — только если выигрыш ощутим | `review-ci-performance` | `skip_specs: true` | — | planned |
 
 ## Отложено до востребования
 

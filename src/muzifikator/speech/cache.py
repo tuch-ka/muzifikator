@@ -194,7 +194,7 @@ def remove_tree(path: Path) -> None:
     shutil.rmtree(path, ignore_errors=True)
 
 
-def _write_json_atomic(path: Path, payload: dict) -> None:
+def _write_json_atomic(path: Path, payload: dict[str, object]) -> None:
     tmp = path.with_suffix(".json.tmp")
     tmp.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
     os.replace(tmp, path)
