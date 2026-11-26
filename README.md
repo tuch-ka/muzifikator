@@ -49,7 +49,8 @@ curl -s http://127.0.0.1:8000/api/health
 
 Настройки — переменными окружения `HOST`, `PORT`, `LOG_LEVEL`, `DB_PATH`,
 `TTS_CACHE_DIR`, `TTS_CACHE_LIMIT_MIB`, `MUSICGEN_MODEL`, `MUSIC_MODELS_DIR`,
-`MUSIC_PROMPT`, `MUSIC_DEVICE`, `OUTPUT_DIR`, `OUTPUT_FORMATS`, `FFMPEG_BIN`,
+`MUSIC_PROMPT`, `MUSIC_DEVICE`, `MUSIC_MIN_DURATION_SECONDS`, `OUTPUT_DIR`,
+`OUTPUT_FORMATS`, `FFMPEG_BIN`,
 `FFPROBE_BIN` или локальным `.env`. База по умолчанию — `data/muzifikator.sqlite3`,
 схема обновляется при старте; кэш озвучки — `.cache/tts`, ограничен 200 МиБ;
 веса музыки — в `models/` (~2,2 ГБ, скачиваются при первом запуске); готовые

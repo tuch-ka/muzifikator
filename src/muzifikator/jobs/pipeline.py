@@ -61,8 +61,9 @@ def run_generation(generation_id: str, params: GenerationParams, deps: JobDeps) 
             with tempfile.TemporaryDirectory(prefix=".tmp-music-", dir=deps.output_dir) as workdir:
                 music = deps.music.generate(
                     MusicRequest(
-                        duration_seconds=speech.duration_seconds
-                        + deps.tail_seconds
+                        duration_seconds=deps.assembly.required_music_duration(
+                            speech.duration_seconds
+                        )
                         + MUSIC_TAIL_RESERVE_SECONDS,
                         prompt=params.music_tags,
                         seed=params.music_seed,

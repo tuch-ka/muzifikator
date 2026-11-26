@@ -39,7 +39,7 @@ def _preflight() -> PreflightResult:
     return PreflightResult(ffmpeg=status, ffprobe=other)
 
 
-def _build_env(tmp_path, *, speech_provider=None):
+def _build_env(tmp_path, *, speech_provider=None, min_duration=1.0):
     engine = init_storage(Settings(db_path=tmp_path / "db.sqlite3"))
     factory = create_session_factory(engine)
     speech_provider = speech_provider or FakeSpeechProvider()
@@ -61,6 +61,7 @@ def _build_env(tmp_path, *, speech_provider=None):
         ffmpeg_bin=str(FFMPEG),
         ffprobe_bin=str(FFPROBE),
         output_dir=tmp_path / "out",
+        min_duration_seconds=min_duration,
     )
     deps = JobDeps(
         session_factory=factory,
@@ -314,3 +315,16 @@ def test_absolute_folder_is_rejected(env):
     response = _post(env.client, folder="/tmp")
 
     assert response.status_code == 400
+
+
+def test_minimum_duration_extends_short_track(tmp_path):
+    environment = _build_env(tmp_path, min_duration=5.0)
+
+    with TestClient(environment.app) as client:
+        created = _post(client).json()
+        body = _wait(client, created["id"])
+
+    assert body["status"] == "done"
+    assert body["duration_seconds"] == pytest.approx(5.0, abs=0.3)
+    requested = environment.music_provider.calls[-1][1]
+    assert requested == pytest.approx(5.3, abs=0.05)

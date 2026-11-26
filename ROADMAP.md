@@ -29,7 +29,6 @@ Suno как сервис недоступен: сеть ограничена Hug
 
 | Фаза | Change | Capabilities | Issue |
 |---|---|---|---|
-| Минимальная длительность музыки: настройка `MUSIC_MIN_DURATION_SECONDS`, по умолчанию 20 с | `add-min-music-duration` | `music-generation` (mod) | — |
 | Файлы в интерфейсе: проигрывание и «открыть в файловом менеджере» с учётом ОС | `add-file-playback` | `web-interface` (mod), `output-files` (mod) | — |
 | Пение: оценка локальных моделей (YuE, ACE-Step, DiffSinger) и прототип | `evaluate-singing-models` | `skip_specs: true` | — |
 | Пение: реализация выбранного подхода | `add-singing-synthesis` | `singing-synthesis` (new), `generation-jobs` (mod), `web-interface` (mod) | — |
