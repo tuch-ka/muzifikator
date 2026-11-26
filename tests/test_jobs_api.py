@@ -22,6 +22,7 @@ from muzifikator.speech import (
 from muzifikator.storage import (
     create_generation,
     create_session_factory,
+    get_generation,
     init_storage,
     list_generation_files,
     start_generation,
@@ -233,3 +234,42 @@ def test_endpoints_require_jobs():
 
     assert response.status_code == 503
     assert health.status_code == 200
+
+
+def test_settings_become_generation_defaults(env):
+    patched = env.client.patch(
+        "/api/settings",
+        json={"tts_voice": "voice-a", "music_tags": "symphonic metal", "output_formats": ["mp3"]},
+    )
+    assert patched.status_code == 200
+
+    created = env.client.post("/api/generations", json={"text": "Только текст"}).json()
+    body = _wait(env.client, created["id"])
+
+    assert body["status"] == "done"
+    assert set(body["files"]) == {"mp3"}
+    assert env.music_provider.calls[-1][0] == "symphonic metal"
+    with env.factory() as session:
+        stored = get_generation(session, created["id"])
+        assert stored.voice == "voice-a"
+        assert stored.music_tags == "symphonic metal"
+
+
+def test_missing_voice_without_settings_is_rejected(env):
+    response = env.client.post("/api/generations", json={"text": "Без голоса"})
+
+    assert response.status_code == 422
+
+
+def test_explicit_parameters_override_settings(env):
+    env.client.patch(
+        "/api/settings",
+        json={"tts_voice": "voice-a", "music_tags": "folk metal"},
+    )
+
+    created = _post(env.client, music_tags="symphonic metal").json()
+    _wait(env.client, created["id"])
+
+    assert env.music_provider.calls[-1][0] == "symphonic metal"
+    settings = env.client.get("/api/settings").json()
+    assert settings["music_tags"] == "folk metal"

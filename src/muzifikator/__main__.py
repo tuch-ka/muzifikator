@@ -110,6 +110,7 @@ def main(argv: list[str] | None = None) -> int:
         engine=engine,
         session_factory=session_factory,
         jobs=jobs,
+        settings=settings,
     )
     uvicorn.run(app, host=settings.host, port=settings.port, log_config=None)
     return 0

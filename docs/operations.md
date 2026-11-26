@@ -167,6 +167,38 @@ curl -s localhost:8000/api/voices                   # голоса провай�
 `running`, читается как `failed` с причиной «прервано перезапуском» — её нужно
 поставить заново.
 
+## API файлов
+
+`GET /api/files?path=<относительный>` листает только внутри выходного каталога
+`OUTPUT_DIR`:
+
+```
+curl -s 'localhost:8000/api/files?path=' | python3 -m json.tool
+curl -s 'localhost:8000/api/files?path=archive'
+```
+
+Ответ: `root` (абсолютный путь), `path` и `entries` с полями `name`, `path`
+(относительно корня), `kind` (`file`/`dir`), `size`, `modified_at`. Порядок:
+каталоги, затем имена без учёта регистра.
+
+`..`, абсолютные пути и симлинки, ведущие за корень, дают `400`; отсутствующий
+каталог — `404`. Скачивания нет: API отдаёт только метаданные.
+
+## API настроек
+
+```
+curl -s localhost:8000/api/settings
+curl -s -X PATCH localhost:8000/api/settings -H 'content-type: application/json' \
+  -d '{"tts_voice":"ru-RU-DmitryNeural","music_tags":"folk metal","output_formats":["mp3","m4a"]}'
+```
+
+Ключи: `tts_voice`, `music_tags`, `rate_percent`, `pitch_hz`, `growl`,
+`output_formats`. Неизвестный ключ или некорректное значение — `400`, ничего не
+сохраняется. Настройки переживают перезапуск.
+
+Постановка задачи без параметров берёт их из настроек: `voice` можно не
+указывать, если он сохранён; явные значения в запросе главнее настроек.
+
 ## Результаты
 
 Готовые файлы лежат в `OUTPUT_DIR` (по умолчанию `out/`), каталог создаётся сам.
