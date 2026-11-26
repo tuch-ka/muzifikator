@@ -38,9 +38,7 @@ def robot_sing(text: str, *, tags: str, voice: str, out: Path, sr: int = 24000) 
     n_frames = len(time_axis)
     note_f0 = np.array([440.0 * 2 ** ((n.midi - 69) / 12) for n in notes])
     # равномерно распределяем ноты по кадрам
-    indices = np.clip(
-        (np.linspace(0, len(notes) - 1, n_frames)).astype(int), 0, len(notes) - 1
-    )
+    indices = np.clip((np.linspace(0, len(notes) - 1, n_frames)).astype(int), 0, len(notes) - 1)
     target_f0 = note_f0[indices]
 
     synthesized = pw.synthesize(target_f0, spectral, aperiodicity, rate, frame_period)

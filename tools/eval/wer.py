@@ -2,13 +2,10 @@
 
 from __future__ import annotations
 
+import re
 import sys
-from pathlib import Path
 
 from faster_whisper import WhisperModel
-
-
-import re
 
 
 def normalize(text: str) -> list[str]:
