@@ -77,6 +77,7 @@ class Generation(Base):
     music_seed: Mapped[int | None] = mapped_column(Integer)
     status: Mapped[str] = mapped_column(String(16), nullable=False, default="pending")
     stage: Mapped[str | None] = mapped_column(String(16))
+    mode: Mapped[str] = mapped_column(String(16), nullable=False, default="song")
     output_path: Mapped[str | None] = mapped_column(Text)
     duration_seconds: Mapped[float | None] = mapped_column(Float)
     error: Mapped[str | None] = mapped_column(Text)

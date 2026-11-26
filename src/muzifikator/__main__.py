@@ -16,6 +16,7 @@ from .logging_setup import configure_logging
 from .music import MusicGenProvider, MusicService, TransformersBackend
 from .paths import expand
 from .preflight import format_failure, run_preflight
+from .singing import NNSVSBackend, SingingService
 from .speech import EdgeTTSProvider, SpeechService
 from .storage import StorageError, create_session_factory, init_storage
 
@@ -102,12 +103,14 @@ def main(argv: list[str] | None = None) -> int:
         formats=settings.output_formats_list,
         min_duration_seconds=settings.music_min_duration_seconds,
     )
+    singing = SingingService(NNSVSBackend(model_dir=settings.nnsvs_model_dir))
     jobs = JobManager(
         JobDeps(
             session_factory=session_factory,
             speech=speech,
             music=music,
             assembly=assembly,
+            singing=singing,
             resolve_output_dir=store.effective_output_dir,
             tail_seconds=assembly.tail_seconds,
             formats=settings.output_formats_list,

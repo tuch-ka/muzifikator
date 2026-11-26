@@ -30,6 +30,7 @@ def create_generation(
     voice: str | None = None,
     music_tags: str | None = None,
     music_seed: int | None = None,
+    mode: str = "song",
     generation_id: str | None = None,
 ) -> Generation:
     generation = Generation(
@@ -41,6 +42,7 @@ def create_generation(
         music_tags=music_tags,
         music_seed=music_seed,
         status="pending",
+        mode=mode,
     )
     session.add(generation)
     session.flush()

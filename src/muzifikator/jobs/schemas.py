@@ -9,6 +9,7 @@ from pydantic import BaseModel, Field, field_validator
 
 class GenerationCreate(BaseModel):
     text: str = Field(min_length=1)
+    mode: str = "song"
     voice: str | None = Field(default=None, min_length=1)
     rate_percent: int | None = Field(default=None, ge=-100, le=200)
     pitch_hz: int | None = Field(default=None, ge=-100, le=100)
@@ -33,6 +34,7 @@ class GenerationCreated(BaseModel):
 class GenerationView(BaseModel):
     id: str
     status: str
+    mode: str = "song"
     stage: str | None = None
     created_at: datetime
     finished_at: datetime | None = None

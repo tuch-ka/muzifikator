@@ -6,6 +6,7 @@ import wave
 from pathlib import Path
 
 import numpy as np
+from numpy.typing import NDArray
 
 from .base import MODEL_SAMPLE_RATE, MusicBackend, MusicGenerationError
 
@@ -32,7 +33,7 @@ class MusicGenProvider:
             raise
 
 
-def write_wav(path: Path, samples: np.ndarray, sample_rate: int) -> None:
+def write_wav(path: Path, samples: NDArray[np.float32], sample_rate: int) -> None:
     """PCM 16 бит, моно. Значения вне [-1, 1] обрезаются."""
     clipped = np.clip(np.asarray(samples, dtype=np.float32), -1.0, 1.0)
     pcm = (clipped * 32767).astype(np.int16)

@@ -12,6 +12,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 import numpy as np
+from numpy.typing import NDArray
 
 from .base import (
     MODEL_SAMPLE_RATE,
@@ -71,7 +72,7 @@ class TransformersBackend:
             raise MusicModelError(f"не удалось загрузить модель {self.model_name}: {exc}") from exc
         log.info("музыка: модель загружена")
 
-    def generate(self, *, prompt: str, seconds: float, seed: int) -> np.ndarray:
+    def generate(self, *, prompt: str, seconds: float, seed: int) -> NDArray[np.float32]:
         self.load()
         torch, _auto_processor, _model_class = _import_ml()
         assert self._processor is not None and self._model is not None
@@ -91,7 +92,7 @@ class TransformersBackend:
                     guidance_scale=GUIDANCE_SCALE,
                     max_new_tokens=tokens,
                 )
-            samples: np.ndarray = audio[0, 0].to("cpu").numpy().astype(np.float32)
+            samples: NDArray[np.float32] = audio[0, 0].to("cpu").numpy().astype(np.float32)
             return samples
         except RuntimeError as exc:
             message = str(exc).lower()

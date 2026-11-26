@@ -6,7 +6,13 @@ from pathlib import Path
 from types import SimpleNamespace
 
 import pytest
-from conftest import FFMPEG, FFPROBE, FakeMusicProvider, FakeSpeechProvider
+from conftest import (
+    FFMPEG,
+    FFPROBE,
+    FakeMusicProvider,
+    FakeSingingBackend,
+    FakeSpeechProvider,
+)
 from fastapi.testclient import TestClient
 
 from muzifikator.api import SettingsStore
@@ -16,6 +22,7 @@ from muzifikator.config import Settings
 from muzifikator.jobs import JobDeps, JobManager
 from muzifikator.music import MusicService
 from muzifikator.preflight import BinaryStatus, PreflightResult
+from muzifikator.singing import SingingService
 from muzifikator.speech import (
     SpeechService,
     SynthesisError,
@@ -69,11 +76,13 @@ def _build_env(tmp_path, *, speech_provider=None, min_duration=1.0):
         default_formats=("mp3", "m4a"),
         default_output_dir=tmp_path / "out",
     )
+    singing_backend = FakeSingingBackend()
     deps = JobDeps(
         session_factory=factory,
         speech=speech,
         music=music,
         assembly=assembly,
+        singing=SingingService(singing_backend),
         resolve_output_dir=store.effective_output_dir,
         tail_seconds=assembly.tail_seconds,
         formats=("mp3", "m4a"),
@@ -93,6 +102,7 @@ def _build_env(tmp_path, *, speech_provider=None, min_duration=1.0):
         manager=manager,
         speech_provider=speech_provider,
         music_provider=music_provider,
+        singing_backend=singing_backend,
         tmp_path=tmp_path,
     )
 
@@ -118,7 +128,7 @@ def _wait(client, generation_id: str, timeout: float = 20.0) -> dict:
 
 
 def _post(client, **overrides):
-    payload = {"text": "Привет, мир!", "voice": "voice-a"}
+    payload = {"text": "Привет, мир!", "voice": "voice-a", "mode": "narrated"}
     payload.update(overrides)
     return client.post("/api/generations", json=payload)
 
@@ -259,7 +269,9 @@ def test_settings_become_generation_defaults(env):
     )
     assert patched.status_code == 200
 
-    created = env.client.post("/api/generations", json={"text": "Только текст"}).json()
+    created = env.client.post(
+        "/api/generations", json={"text": "Только текст", "mode": "narrated"}
+    ).json()
     body = _wait(env.client, created["id"])
 
     assert body["status"] == "done"
@@ -272,7 +284,7 @@ def test_settings_become_generation_defaults(env):
 
 
 def test_missing_voice_without_settings_is_rejected(env):
-    response = env.client.post("/api/generations", json={"text": "Без голоса"})
+    response = env.client.post("/api/generations", json={"text": "Без голоса", "mode": "narrated"})
 
     assert response.status_code == 422
 
@@ -310,3 +322,51 @@ def test_output_dir_setting_changes_target(env):
     assert {entry["name"] for entry in listing["files"]} == {
         Path(path).name for path in body["files"].values()
     }
+
+
+def test_default_mode_is_song(env):
+    response = env.client.post(
+        "/api/generations", json={"text": "Привет мир", "music_tags": "folk metal"}
+    )
+
+    assert response.status_code == 202
+    created = response.json()
+    body = _wait(env.client, created["id"])
+
+    assert body["status"] == "done"
+    assert body["mode"] == "song"
+    assert env.singing_backend.calls
+    assert body["duration_seconds"] == pytest.approx(3.0, abs=0.3)
+    with env.factory() as session:
+        stored = get_generation(session, created["id"])
+        assert stored.mode == "song"
+        assert stored.voice is None
+
+
+def test_song_ignores_voice(env):
+    response = env.client.post(
+        "/api/generations",
+        json={"text": "Раз два", "mode": "song", "voice": "нет-такого", "music_tags": "metal"},
+    )
+
+    assert response.status_code == 202
+    assert _wait(env.client, response.json()["id"])["status"] == "done"
+
+
+def test_unknown_mode_is_400(env):
+    response = env.client.post("/api/generations", json={"text": "Раз два", "mode": "opera"})
+
+    assert response.status_code == 400
+
+
+def test_song_respects_minimum_duration(tmp_path):
+    environment = _build_env(tmp_path, min_duration=6.0)
+
+    with TestClient(environment.app) as client:
+        created = client.post(
+            "/api/generations", json={"text": "Раз два", "music_tags": "metal"}
+        ).json()
+        body = _wait(client, created["id"])
+
+    assert body["status"] == "done"
+    assert body["duration_seconds"] == pytest.approx(6.0, abs=0.4)

@@ -81,6 +81,20 @@ class FakeMusicProvider:
         write_tone(target, seconds + 0.1, frequency=220, sample_rate=self.sample_rate)
 
 
+class FakeSingingBackend:
+    """Бэкенд пения для тестов: пишет тон в вокал-файл."""
+
+    name = "fake-singing"
+
+    def __init__(self, *, duration: float = 1.0) -> None:
+        self.duration = duration
+        self.calls: list = []
+
+    def sing(self, *, notes, tempo, target) -> None:
+        self.calls.append(list(notes))
+        write_tone(target, self.duration, frequency=330, sample_rate=22050)
+
+
 def write_tone(path, seconds: float, *, frequency: int = 440, sample_rate: int = 24000) -> None:
     if str(path).endswith(".mp3"):
         codec = ["-c:a", "libmp3lame", "-q:a", "4"]

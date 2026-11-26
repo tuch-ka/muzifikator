@@ -4,6 +4,7 @@ const POLL_INTERVAL_MS = 1000;
 const PAGE_SIZE = 50;
 const STAGE_WIDTH = { tts: "33%", music: "66%", mix: "100%" };
 const STAGE_LABEL = { tts: "Озвучка", music: "Музыка", mix: "Микс" };
+const STAGE_LABEL_SONG = { tts: "Вокал", music: "Подложка", mix: "Сведение" };
 const AUDIO_EXTENSIONS = [".mp3", ".m4a", ".wav", ".aac"];
 
 const state = {
@@ -13,6 +14,7 @@ const state = {
   storagePath: "",
   browserPath: "",
   browserParent: null,
+  currentMode: "song",
   filesOffset: 0,
 };
 
@@ -265,9 +267,14 @@ async function saveStorage(path) {
   showMessage("Каталог хранения сохранён", "ok");
 }
 
+function syncMode() {
+  el("voice").disabled = el("mode").value === "song";
+}
+
 function collectParams() {
   return {
     text: el("text").value,
+    mode: el("mode").value,
     voice: el("voice").value,
     music_tags: el("tags").value.trim() || null,
   };
@@ -303,7 +310,8 @@ async function poll(generationId) {
       return;
     }
     const stage = body.stage || "";
-    showStatus(STAGE_LABEL[stage] || "В работе", stage);
+    const labels = state.currentMode === "song" ? STAGE_LABEL_SONG : STAGE_LABEL;
+    showStatus(labels[stage] || "В работе", stage);
     await new Promise((resolve) => setTimeout(resolve, POLL_INTERVAL_MS));
   }
 }
@@ -326,11 +334,13 @@ async function submitGeneration(params) {
       headers: { "content-type": "application/json" },
       body: JSON.stringify({
         text: params.text,
+        mode: params.mode || "song",
         voice: params.voice,
         music_tags: params.music_tags,
       }),
     });
     state.lastParams = params;
+    state.currentMode = params.mode || "song";
     showStatus("В работе", "");
     await poll(created.id);
   } catch (error) {
@@ -377,6 +387,8 @@ async function init() {
     }
   });
   el("save-settings").addEventListener("click", saveSettings);
+  el("mode").addEventListener("change", syncMode);
+  syncMode();
 
   el("storage-edit").addEventListener("click", () => {
     el("storage-browser").hidden = false;

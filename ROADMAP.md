@@ -29,6 +29,7 @@ Suno как сервис недоступен: сеть ограничена Hug
 
 | Фаза | Change | Capabilities | Issue |
 |---|---|---|---|
+| Качество контента: разборчивость и естественность пения, музыкальная подложка, баланс вокал/музыка, длительность и фейды | `improve-content-quality` | `singing-synthesis` (mod), `music-generation` (mod), `audio-assembly` (mod) | — |
 | Пение: реализация на NNSVS (банк «Llane Crow»), робот-пение D — запасной | `add-singing-synthesis` | `singing-synthesis` (new), `generation-jobs` (mod), `web-interface` (mod) | — |
 | Провайдеры TTS: второй локальный провайдер (Piper), выбор провайдера в UI, ошибки провайдера | `add-tts-provider-switch` | `tts-providers` (new), `speech-synthesis` (mod), `web-interface` (mod) | — |
 | Тесты, README, лицензионные примечания | `add-tests-and-docs` | `skip_specs: true` | — |
