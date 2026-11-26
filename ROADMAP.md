@@ -29,8 +29,8 @@ Suno как сервис недоступен: сеть ограничена Hug
 
 | Фаза | Change | Capabilities | Issue |
 |---|---|---|---|
+| Провайдеры и модели: выбор зависит от режима — провайдер TTS в озвучке (напр. Piper), модель/банк пения в песне; список выбора в UI динамический по режиму, ошибки провайдера видны пользователю | `add-provider-switch` | `tts-providers` (new), `singing-synthesis` (mod), `web-interface` (mod) | — |
 | Качество контента: разборчивость и естественность пения, музыкальная подложка, баланс вокал/музыка, длительность и фейды | `improve-content-quality` | `singing-synthesis` (mod), `music-generation` (mod), `audio-assembly` (mod) | — |
-| Провайдеры TTS: второй локальный провайдер (Piper), выбор провайдера в UI, ошибки провайдера | `add-tts-provider-switch` | `tts-providers` (new), `speech-synthesis` (mod), `web-interface` (mod) | — |
 | Тесты, README, лицензионные примечания | `add-tests-and-docs` | `skip_specs: true` | — |
 | Оценка CI: замеры, кэш apt, параллельные job'ы — только если выигрыш ощутим | `review-ci-performance` | `skip_specs: true` | — |
 
