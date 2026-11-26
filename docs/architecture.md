@@ -18,7 +18,8 @@ flowchart LR
     UI["Web UI<br/>static HTML + JS<br/>из пакета"] --> API["FastAPI<br/>routers: ui, generations,<br/>library, settings"]
     OPS["curl /health"] --> API
     API --> JOB["JobManager<br/>single-flight, поток"]
-    JOB --> SPEECH["SpeechService<br/>провайдер + кэш + ffmpeg"]
+    JOB --> SPEECH["SpeechService<br/>edge-tts + кэш"]
+    JOB --> SING["SingingService<br/>NNSVS (подпроцесс)"]
     SPEECH --> TTS["edge-tts"]
     SPEECH --> CACHE[(".cache/tts")]
     JOB --> MUS["MusicService<br/>MusicGen + сегменты"]
@@ -70,6 +71,10 @@ sequenceDiagram
   только сериализует, внешние процессы на запросах не запускаются.
 - Хранилище — SQLite с WAL, синхронный SQLAlchemy 2.0; схема приводится к
   последней ревизии Alembic при старте, `create_all` не используется.
+- Пение: `singing/` строит процедурную мелодию и UST, а вендоренный NNSVS
+  (`vendor/`, MIT) синтезирует вокал в подпроцессе (тот же venv, изоляция
+  `chdir`); подложку даёт MusicGen, сводит `media.mix_tracks`. Режим задачи —
+  `song` (по умолчанию) или `narrated`.
 - Речь синтезируется синхронным слоем: провайдер за протоколом (сейчас
   edge-tts), кэш в `.cache/tts` с ключом по тексту и параметрам и лимитом в
   МиБ, длительность — по `ffprobe`, «рык» — ffmpeg-фильтр с сохранением

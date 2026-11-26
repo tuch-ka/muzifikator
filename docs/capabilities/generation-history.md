@@ -50,6 +50,7 @@
 | `tts_provider`, `voice` | нет | Чем и каким голосом озвучивали |
 | `music_tags`, `music_seed` | нет | Параметры музыки |
 | `status` | да | `pending`/`running`/`done`/`failed` |
+| `mode` | да | `song` или `narrated` |
 | `stage` | нет | `tts`/`music`/`mix` |
 | `output_path` | при `done` | Путь к основному файлу (MP3) |
 | `duration_seconds` | при `done` | Длительность результата |
@@ -59,6 +60,7 @@
 failed`, `pending → failed`. Любой другой переход отклоняется с ошибкой
 `InvalidTransitionError`.
 
+В режиме `song` параметры озвучки пусты, заполняются теги музыки и seed.
 Файлы результата лежат в таблице `generation_files`: одна строка на формат,
 ключ `(generation_id, format)`, путь к файлу. `generations.output_path`
 по-прежнему хранит основной файл (MP3) для совместимости, но истина о наборе

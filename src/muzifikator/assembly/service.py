@@ -23,11 +23,6 @@ from .mix import Mixer, MixSettings
 
 log = logging.getLogger(__name__)
 
-_ENCODERS: dict[str, list[str]] = {
-    "mp3": ["-c:a", "libmp3lame", "-q:a", "2"],
-    "m4a": ["-c:a", "aac", "-b:a", "192k"],
-}
-
 
 @dataclass(frozen=True)
 class _Encoding:
@@ -110,10 +105,7 @@ class AssemblyService:
         return AssemblyResult(files=targets, formats=formats, duration_seconds=duration)
 
     def _encode(self, master: Path, encodings: list[_Encoding]) -> None:
-        command = [self.media.ffmpeg_bin, "-y", "-i", str(master)]
-        for item in encodings:
-            command.extend(["-ar", "44100", "-ac", "1", *_ENCODERS[item.format], str(item.path)])
         try:
-            self.media.run(command, action="ffmpeg (экспорт)")
+            self.media.encode(master, [(item.format, item.path) for item in encodings])
         except MediaError as exc:
             raise EncodingError(f"экспорт не удался: {exc}") from exc

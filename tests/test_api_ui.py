@@ -30,6 +30,7 @@ def test_index_page_served(tmp_path):
         "text",
         "voice",
         "tags",
+        "mode",
         "storage-path",
         "storage-browser",
         "browser-list",
@@ -57,7 +58,7 @@ def test_static_assets_served(tmp_path):
 
     assert script.status_code == 200
     assert "javascript" in script.headers["content-type"]
-    for marker in ("/api/files", "/api/storage/browse", "/media", "/reveal", "DELETE"):
+    for marker in ("/api/files", "/api/storage/browse", "/media", "/reveal", "DELETE", "mode"):
         assert marker in script.text
     assert styles.status_code == 200
     assert "text/css" in styles.headers["content-type"]

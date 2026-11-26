@@ -12,6 +12,11 @@ log = logging.getLogger(__name__)
 PROBE_TIMEOUT_SECONDS = 30.0
 FFMPEG_TIMEOUT_SECONDS = 300.0
 
+ENCODERS: dict[str, list[str]] = {
+    "mp3": ["-c:a", "libmp3lame", "-q:a", "2"],
+    "m4a": ["-c:a", "aac", "-b:a", "192k"],
+}
+
 
 class MediaError(RuntimeError):
     """ffmpeg или ffprobe не смогли выполнить операцию."""
@@ -109,6 +114,65 @@ class MediaTools:
             ],
             action=action,
         )
+
+    def mix_tracks(
+        self,
+        vocal: Path,
+        backing: Path,
+        target: Path,
+        *,
+        duration: float,
+        vocal_gain: float = 1.0,
+        backing_gain: float = 0.35,
+        sample_rate: int = 44100,
+        fade_out: float = 2.0,
+    ) -> None:
+        """Свести вокал и подложку: вокал главный, музыка фоном, loudnorm, fade-out."""
+        fmt = f"aresample={sample_rate},aformat=sample_fmts=fltp:channel_layouts=mono"
+        fade_start = max(0.0, duration - fade_out) if fade_out > 0 else 0.0
+        tail_filter = f",afade=t=out:st={fade_start:.3f}:d={fade_out}" if fade_out > 0 else ""
+        graph = ";".join(
+            [
+                f"[0:a]{fmt},volume={vocal_gain}[v]",
+                f"[1:a]{fmt},volume={backing_gain}[b]",
+                (
+                    "[v][b]amix=inputs=2:duration=longest:normalize=0,"
+                    "loudnorm=I=-16:TP=-1.5:LRA=11"
+                    f"{tail_filter}[out]"
+                ),
+            ]
+        )
+        self.run(
+            [
+                self.ffmpeg_bin,
+                "-y",
+                "-i",
+                str(vocal),
+                "-i",
+                str(backing),
+                "-filter_complex",
+                graph,
+                "-map",
+                "[out]",
+                "-t",
+                f"{duration:.3f}",
+                "-ar",
+                str(sample_rate),
+                "-ac",
+                "1",
+                "-c:a",
+                "pcm_s16le",
+                str(target),
+            ],
+            action="ffmpeg (сведение)",
+        )
+
+    def encode(self, master: Path, encodings: list[tuple[str, Path]]) -> None:
+        """Закодировать мастер в запрошенные форматы одной командой."""
+        command = [self.ffmpeg_bin, "-y", "-i", str(master)]
+        for fmt, path in encodings:
+            command.extend(["-ar", "44100", "-ac", "1", *ENCODERS[fmt], str(path)])
+        self.run(command, action="ffmpeg (экспорт)")
 
     def crossfade_concat(
         self,

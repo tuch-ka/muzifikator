@@ -1,0 +1,54 @@
+# Tasks
+
+## 1. Спайк: headless NNSVS
+
+- [x] 1.1 Добавить runtime-зависимости `nnsvs`, `utaupy`, `pyworld`, `soundfile`; проверить импорты и совместимость версий
+- [x] 1.2 Скачать релиз модели «Llane Crow» (`Llane.Crow.AI.-.Rose.-.zip`) в `models/nnsvs/`, распаковать; зафиксировать состав (acoustic/duration/timelag `.pth`, hed, dic, скалеры, enuconfig)
+- [x] 1.3 Завести headless-синтез одной фразы из трёх слов: UST из ручных нот и фонем → full-context labels через `utaupy` → `nnsvs` синтез → WAV; зафиксировать точную последовательность команд и флаги
+- [x] 1.4 Замерить время и память синтеза; проверить детерминизм (два запуска — одинаковый WAV). Синтез заведён: WAV получен (0.79 с, non-silent); рецепт и 5 патчей — в `tools/eval/NNSVS_RECIPE.md`
+
+## 2. Мелодия и G2P
+
+- [x] 2.1 Перенести `tools/eval/melody.py` в `singing/melody.py` с seed-детерминизмом и тестами (нота на слог, гамма из тегов, тоника в конце)
+- [x] 2.2 Реализовать `singing/g2p.py` — русская графема → фонемы по таблице/правилам из `nnsvs-russian-support`; тесты на тестовых словах
+- [x] 2.3 Реализовать `singing/labels.py` — мелодия + фонемы → UST; тест, что UST содержит ноты и текст
+
+## 3. Бэкенд и сервис
+
+- [x] 3.1 Реализовать протокол `SingingBackend` и `nnsvs.py`: ленивая загрузка модели один раз на процесс, синтез в WAV, ошибки `SingingModelError`/`SingingSynthesisError`; проверить на фейковом бэкенде и под маркером `model` на реальной
+- [x] 3.2 Реализовать `SingingService`: лирика+теги+seed → вокал WAV, проверка пустой лирики, удаление частичного файла при сбое; тесты с фейковым бэкендом
+- [x] 3.3 Проверить детерминизм: тот же seed/теги дают тот же WAV на реальной модели (маркер `model`)
+
+## 4. Подложка и микс
+
+- [x] 4.1 Вынести карту энкодеров из `assembly/service.py` в `media.py` (`media.encoders`) и добавить `media.mix_tracks(vocal, backing, target, vocal_gain, backing_gain, tail)` с `amix normalize=0` и `loudnorm`; тесты длительности и кодеков
+- [x] 4.2 В `SingingService` добавить сборку полного трека: вокал + подложка MusicGen по тегам + микс + экспорт MP3/M4A; тест с фейковым бэкендом и настоящим MusicGen не требуется (музыка тестируется отдельно)
+
+## 5. Режим задачи и схема
+
+- [x] 5.1 Миграция: колонка `generations.mode` (TEXT NOT NULL, default `song`) и расширение CHECK-стадий до `tts/music/mix/melody/sing` через `batch_alter_table`; проверить `upgrade`/`downgrade`
+- [x] 5.2 Добавить `mode` в `GenerationCreate` (Literal, default `song`), `GenerationParams`, `GenerationView`; валидация неизвестного режима `400` до создания записи; тесты API
+- [x] 5.3 В пайплайне реализовать ветку `song` (melody→sing→music→mix) и сохранить `mode`, `music_tags`, `music_seed` (голос пуст) в историю; `narrated` без изменений; тесты режимов и стадий
+
+## 6. Интерфейс
+
+- [x] 6.1 Добавить переключатель режима (song по умолчанию); в song поле голоса `disabled`; отправка передаёт `mode`
+- [x] 6.2 Проверить, что в song задача завершается `done` с файлами и стадиями `melody/sing/music/mix`, а опрос показывает mode
+
+## 7. Проверка
+
+- [x] 7.1 Прогнать `uv run ruff check .`, `uv run ruff format --check .`, `uv run mypy`, `uv run pytest`; сетевые и модельные тесты исключены
+- [x] 7.2 Ручной сценарий на реальной модели: лирика из двух строк по умолчанию даёт песню с подложкой; прослушать; повторить с тем же seed — одинаково
+- [x] 7.3 Проверить `narrated` после миграции: прежняя цепочка работает, история пишет режим `narrated`
+
+## 8. Документация
+
+- [x] 8.1 Обновить `docs/operations.md`: зависимости пения, веса `models/nnsvs/`, режимы, что делать при ошибке модели
+- [x] 8.2 Обновить `docs/architecture.md`: слой пения, режим задачи, новые стадии
+- [x] 8.3 Обновить `README.md`: пение как режим по умолчанию
+
+## Workflow follow-up
+
+- Провести ревью change вместе с владельцем и получить явное «approve plan».
+- После реализации — «approve apply», затем архив: влить черновики
+  `docs/capabilities/*`, закрыть issue #21, удалить строку фазы из `ROADMAP.md`.

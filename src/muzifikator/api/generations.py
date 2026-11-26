@@ -49,6 +49,7 @@ def build_generations_router(
         return GenerationView(
             id=generation.id,
             status=generation.status,
+            mode=generation.mode,
             stage=generation.stage,
             created_at=generation.created_at,
             finished_at=generation.finished_at,
@@ -76,12 +77,17 @@ def build_generations_router(
             raise HTTPException(status_code=503, detail="настройки не сконфигурированы")
 
         settings = store.read()
-        voice = payload.voice or settings["tts_voice"]
-        if not voice:
-            raise HTTPException(
-                status_code=422,
-                detail="голос не указан и не сохранён в настройках",
-            )
+        mode = payload.mode
+        if mode not in {"song", "narrated"}:
+            raise HTTPException(status_code=400, detail=f"неизвестный режим: {mode}")
+        voice: str | None = None
+        if mode == "narrated":
+            voice = payload.voice or settings["tts_voice"]
+            if not voice:
+                raise HTTPException(
+                    status_code=422,
+                    detail="голос не указан и не сохранён в настройках",
+                )
         music_tags = (
             payload.music_tags if payload.music_tags is not None else settings["music_tags"]
         )
@@ -98,12 +104,13 @@ def build_generations_router(
         except UnknownFormatError as exc:
             raise HTTPException(status_code=400, detail=str(exc)) from exc
 
-        try:
-            known_voices = {item.name for item in manager.deps.speech.list_voices()}
-        except VoiceListError as exc:
-            raise HTTPException(status_code=502, detail=str(exc)) from exc
-        if voice not in known_voices:
-            raise HTTPException(status_code=400, detail=f"голос не найден: {voice}")
+        if mode == "narrated":
+            try:
+                known_voices = {item.name for item in manager.deps.speech.list_voices()}
+            except VoiceListError as exc:
+                raise HTTPException(status_code=502, detail=str(exc)) from exc
+            if voice not in known_voices:
+                raise HTTPException(status_code=400, detail=f"голос не найден: {voice}")
 
         generation_id = new_id()
         busy = manager.reserve(generation_id)
@@ -125,6 +132,7 @@ def build_generations_router(
             music_tags=music_tags,
             music_seed=payload.music_seed,
             formats=formats,
+            mode=mode,
         )
         try:
             with factory() as session:
@@ -135,6 +143,7 @@ def build_generations_router(
                     tts_provider="edge",
                     music_tags=music_tags,
                     music_seed=payload.music_seed,
+                    mode=mode,
                     generation_id=generation_id,
                 )
                 session.commit()

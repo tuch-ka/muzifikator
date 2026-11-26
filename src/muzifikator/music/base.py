@@ -7,6 +7,7 @@ from pathlib import Path
 from typing import Protocol, runtime_checkable
 
 import numpy as np
+from numpy.typing import NDArray
 
 MIN_DURATION_SECONDS = 1.0
 WINDOW_SECONDS = 30.0
@@ -69,7 +70,7 @@ class MusicBackend(Protocol):
         """Загрузить модель и процессор, если ещё не загружены."""
         ...
 
-    def generate(self, *, prompt: str, seconds: float, seed: int) -> np.ndarray:
+    def generate(self, *, prompt: str, seconds: float, seed: int) -> NDArray[np.float32]:
         """Аудио сегмента: моно, float, 32 кГц."""
         ...
 
