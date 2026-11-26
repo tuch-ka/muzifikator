@@ -78,6 +78,7 @@ def run_generation(generation_id: str, params: GenerationParams, deps: JobDeps) 
                         music=music.path,
                         text=params.text,
                         formats=params.formats,
+                        subdir=params.folder,
                     )
                 )
 

@@ -15,7 +15,7 @@ flowchart LR
         ST -->|"ок"| APP["uvicorn"]
         ST -->|"ошибка"| EXIT
     end
-    UI["Web UI<br/>static HTML + JS"] --> API["FastAPI<br/>routers: generations,<br/>files, settings"]
+    UI["Web UI<br/>static HTML + JS<br/>из пакета"] --> API["FastAPI<br/>routers: ui, generations,<br/>files, settings"]
     OPS["curl /health"] --> API
     API --> JOB["JobManager<br/>single-flight, поток"]
     JOB --> SPEECH["SpeechService<br/>провайдер + кэш + ffmpeg"]
@@ -86,9 +86,12 @@ sequenceDiagram
   одновременно, стадии `tts → music → mix` пишутся в базу до работы, результат
   и файлы — в `generations`/`generation_files`. Поток `daemon`: остановка не ждёт
   генерацию, а следующий старт помечает прерванные задачи `failed`.
-- HTTP-слой собран из роутеров (`api/`): задачи, файлы и настройки. Файловый
-  доступ ограничен `OUTPUT_DIR` одной проверкой `resolve()` + «внутри корня»;
-  настройки — белый список в таблице `settings`, они же умолчания постановки.
+- HTTP-слой собран из роутеров (`api/`): статика, задачи, файлы и настройки.
+  Проверка путей — один помощник `paths.resolve_within` (листинг, папка
+  результата, запись); доступ ограничен `OUTPUT_DIR`. Настройки — белый список в
+  таблице `settings`, они же умолчания постановки.
+- UI — статические `index.html`, `style.css`, `app.js` в пакете: без сборки и
+  CDN, прогресс опросом стадий, данные выводятся только текстом.
 - Время в базе — naive UTC, на границе слоя превращается в aware-UTC
   (`UTCDateTime`); коммит транзакций — на вызывающей стороне.
 - Одна модель MusicGen в памяти, одна генерация одновременно.

@@ -8,6 +8,8 @@ from pathlib import Path
 from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel
 
+from ..paths import PathOutsideRootError, resolve_within
+
 
 class FileEntry(BaseModel):
     name: str
@@ -30,7 +32,10 @@ def build_files_router(output_dir: Path) -> APIRouter:
 
     @router.get("/api/files", response_model=FileListing)
     def list_files(path: str = Query(default="")) -> FileListing:
-        target = _resolve_inside(root, path)
+        try:
+            target = resolve_within(root, path)
+        except PathOutsideRootError as exc:
+            raise HTTPException(status_code=400, detail=str(exc)) from exc
         if not target.exists():
             raise HTTPException(status_code=404, detail="каталог не найден")
         if not target.is_dir():
@@ -42,18 +47,6 @@ def build_files_router(output_dir: Path) -> APIRouter:
         )
 
     return router
-
-
-def _resolve_inside(root: Path, raw: str) -> Path:
-    if "\x00" in raw:
-        raise HTTPException(status_code=400, detail="недопустимый путь")
-    candidate = Path(raw)
-    if candidate.is_absolute():
-        raise HTTPException(status_code=400, detail="путь должен быть относительным")
-    resolved = (root / candidate).resolve()
-    if resolved != root and root not in resolved.parents:
-        raise HTTPException(status_code=400, detail="путь вне выходного каталога")
-    return resolved
 
 
 def _relative(root: Path, target: Path) -> str:

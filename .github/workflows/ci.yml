@@ -67,4 +67,10 @@ jobs:
         run: |
           uv venv .wheelcheck
           uv pip install --python .wheelcheck/bin/python --no-deps dist/*.whl
-          .wheelcheck/bin/python -c "import muzifikator"
+          .wheelcheck/bin/python - <<'PY'
+          from pathlib import Path
+          import muzifikator
+          web = Path(muzifikator.__file__).parent / "web" / "index.html"
+          assert web.is_file(), web
+          print("wheel static ok")
+          PY

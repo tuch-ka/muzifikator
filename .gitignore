@@ -25,3 +25,6 @@ out/
 # Сборка пакета
 dist/
 .wheelcheck/
+
+# Артефакты браузерных проверок
+.playwright-mcp/

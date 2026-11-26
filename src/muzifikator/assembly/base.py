@@ -35,6 +35,10 @@ class OutputWriteError(AssemblyError):
     """Не удалось записать итоговые файлы."""
 
 
+class InvalidFolderError(AssemblyError):
+    """Подкаталог результата выходит за корень или абсолютный."""
+
+
 def normalize_formats(formats: Sequence[str] | None) -> tuple[str, ...]:
     """Проверить набор форматов, убрать повторы и привести к нижнему регистру."""
     if formats is None:
@@ -61,6 +65,7 @@ class AssemblyRequest:
     music: Path
     text: str
     formats: tuple[str, ...] | None = None
+    subdir: str | None = None
 
 
 @dataclass(frozen=True)

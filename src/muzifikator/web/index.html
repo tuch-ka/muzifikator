@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>muzifikator</title>
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+<main>
+  <h1>muzifikator</h1>
+  <p class="hint">Текст на музыку: озвучка, подложка и микс в один файл.</p>
+
+  <form id="generation-form" autocomplete="off">
+    <label for="text">Текст</label>
+    <textarea id="text" name="text" rows="8" required placeholder="Что озвучить"></textarea>
+
+    <div class="row">
+      <label for="voice">Голос</label>
+      <select id="voice" name="voice"></select>
+    </div>
+
+    <div class="row">
+      <label for="tags">Теги музыки</label>
+      <input id="tags" name="tags" type="text" placeholder="folk metal">
+    </div>
+
+    <div class="row">
+      <label for="folder">Папка</label>
+      <input id="folder" name="folder" type="text" list="folders" placeholder="например 2026-11">
+      <datalist id="folders"></datalist>
+    </div>
+
+    <div class="actions">
+      <button id="submit" type="submit">Сгенерировать</button>
+      <button id="regenerate" type="button" disabled>Перегенерировать</button>
+      <button id="save-settings" type="button" class="secondary">Сохранить настройки</button>
+    </div>
+  </form>
+
+  <p id="message" role="status" aria-live="polite"></p>
+
+  <section id="status" hidden>
+    <p id="status-text"></p>
+    <div class="bar"><div id="status-bar"></div></div>
+  </section>
+
+  <section id="result" hidden>
+    <h2>Результат</h2>
+    <ul id="result-files"></ul>
+  </section>
+
+  <section id="files">
+    <h2>Файлы</h2>
+    <p id="files-path" class="hint"></p>
+    <ul id="files-list"></ul>
+  </section>
+</main>
+<script src="/static/app.js"></script>
+</body>
+</html>

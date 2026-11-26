@@ -25,7 +25,6 @@ Issue не заводится заранее: он появляется вмес
 
 | Фаза | Change | Capabilities | Issue |
 |---|---|---|---|
-| UI: два поля, предзаполненные теги, перегенерация, папка, прогресс | `add-web-ui` | `web-interface` | — |
 | Провайдеры TTS: второй локальный провайдер (Piper), выбор провайдера в UI, ошибки провайдера | `add-tts-provider-switch` | `tts-providers` (new), `speech-synthesis` (mod), `web-interface` (mod) | — |
 | Тесты, README, лицензионные примечания | `add-tests-and-docs` | `skip_specs: true` | — |
 | Оценка CI: замеры, кэш apt, параллельные job'ы — только если выигрыш ощутим | `review-ci-performance` | `skip_specs: true` | — |
