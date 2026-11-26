@@ -1,6 +1,9 @@
 # Roadmap
 
-История намерений. Здесь живут фазы до того, как они станут OpenSpec change.
+План развития. Здесь живут только ещё не выполненные фазы; выполненные
+удаляются — история остаётся в GitHub issues и в `openspec/specs/`. Номер фазы —
+стабильный идентификатор: он не переиспользуется и не сдвигается.
+
 Пока фаза не взята в работу, ни issue, ни change не создаются.
 
 ## Правило входа в работу
@@ -8,8 +11,8 @@
 1. Берём следующую фазу из таблицы.
 2. Создаём GitHub issue (одна фаза — один issue).
 3. Создаём change с указанным именем; proposal ссылается на issue.
-4. При архивации change закрываем issue и обновляем `docs/`.
-5. Статус в таблице меняем здесь же, в том же коммите.
+4. При архивации change закрываем issue, обновляем `docs/` и удаляем строку
+   фазы из таблицы в том же коммите.
 6. PR ставится на автослияние; агент дожидается прогона CI на PR и merge, но не
    ждёт прогон CI на `main` — его смотрит владелец. Красный `main` закрывается
    отдельным issue на фикс.
@@ -19,20 +22,13 @@ Issue не заводится заранее: он появляется вмес
 
 ## Фазы
 
-| # | Фаза | Change | Capabilities | Issue | Статус |
-|---|---|---|---|---|---|
-| 1 | Каркас: uv-проект, конфиг, логи, preflight ffmpeg/ffprobe, `/api/health` | `add-project-scaffold` | `ffmpeg-preflight`, `service-health` | #1 | done |
-| 2 | Хранилище: SQLite, Alembic, таблицы `generations` и `settings` | `add-storage-migrations` | `generation-history`, `persisted-settings`, `storage-schema` | #2 | done |
-| 3 | Озвучка: абстракция провайдера, edge-tts как первый, список голосов, длительность, кэш, «рык» | `add-tts` | `speech-synthesis` | #3 | done |
-| 4 | Музыка: MusicGen из transformers, seed, сегменты, теги | `add-music-generation` | `music-generation` | #4 | done |
-| 5 | CI и типы: GitHub Actions — ruff, mypy (strict по `src`), pytest, openspec validate, build | `add-ci` | `skip_specs: true` | #5 | done |
-| 6 | Микс и экспорт: дакинг, фейды, mp3/m4a, имена файлов | `add-audio-mix` | `audio-assembly`, `output-files`, `ffmpeg-preflight` (mod) | #7 | done |
-| 7 | Задачи: single-flight, стадии, polling, запись в БД | `add-job-orchestration` | `generation-jobs`, `generation-history` (mod) | #9 | done |
-| 8 | API файлов и настроек: корни, листинг, сохранение настроек | `add-fs-and-settings-api` | `web-interface` | — | planned |
-| 9 | UI: два поля, предзаполненные теги, перегенерация, папка, прогресс | `add-web-ui` | `web-interface` | — | planned |
-| 10 | Провайдеры TTS: второй локальный провайдер (Piper), выбор провайдера в UI, ошибки провайдера | `add-tts-provider-switch` | `tts-providers` (new), `speech-synthesis` (mod), `web-interface` (mod) | — | planned |
-| 11 | Тесты, README, лицензионные примечания | `add-tests-and-docs` | `skip_specs: true` | — | planned |
-| 12 | Оценка CI: замеры, кэш apt, параллельные job'ы — только если выигрыш ощутим | `review-ci-performance` | `skip_specs: true` | — | planned |
+| # | Фаза | Change | Capabilities | Issue |
+|---|---|---|---|---|
+| 8 | API файлов и настроек: листинг внутри `OUTPUT_DIR`, сохранение настроек | `add-fs-and-settings-api` | `web-interface` | #11 |
+| 9 | UI: два поля, предзаполненные теги, перегенерация, папка, прогресс | `add-web-ui` | `web-interface` | — |
+| 10 | Провайдеры TTS: второй локальный провайдер (Piper), выбор провайдера в UI, ошибки провайдера | `add-tts-provider-switch` | `tts-providers` (new), `speech-synthesis` (mod), `web-interface` (mod) | — |
+| 11 | Тесты, README, лицензионные примечания | `add-tests-and-docs` | `skip_specs: true` | — |
+| 12 | Оценка CI: замеры, кэш apt, параллельные job'ы — только если выигрыш ощутим | `review-ci-performance` | `skip_specs: true` | — |
 
 ## Отложено до востребования
 

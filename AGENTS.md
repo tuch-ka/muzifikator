@@ -36,8 +36,7 @@
   1. `MUZ-<issue>: feat: <итог фазы>` — код, тесты, `docs/`, `Refs #<issue>`;
   2. `MUZ-<issue>: chore(openspec): archive <change>` — синхронизация
      `openspec/specs`, перенос change в `openspec/changes/archive/`,
-     `docs/capabilities/`, `ROADMAP.md` (статус фазы и номер issue), закрытый
-     issue.
+     `docs/capabilities/`, удаление строки фазы из `ROADMAP.md`, закрытый issue.
   Код-коммит создаётся до переноса change: так выполняется гейт «архив только
   после кода изменён».
 - **Ветка, PR и слияние** — только после пары архивных коммитов:
