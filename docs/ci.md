@@ -64,14 +64,23 @@ uv build
 - Установка идёт `uv sync --locked`: расхождение `uv.lock` и `pyproject.toml`
   роняет прогон, а не пересобирает lockfile молча.
 
-## Настройки репозитория (владелец)
+## Настройки репозитория
 
-Чтобы CI реально блокировал merge:
+Правило защиты `main` настроено 2026-11-26:
 
-1. Settings → Branches → Add branch protection rule для `main`.
-2. Включить «Require status checks to pass before merging» и выбрать `checks`.
-3. Включить «Require branches to be up to date before merging».
-4. Прямой push в `main` не нужен: весь код идёт через PR.
+| Настройка | Значение |
+|---|---|
+| Require a pull request before merging | да, без обязательных ревью (0) |
+| Require status checks | `checks`, устаревшие ветки запрещены (`strict`) |
+| Force pushes, deletions | запрещены |
+| Do not allow bypassing (enforce admins) | **выключено** — мягкий режим |
+
+`enforce_admins` выключен намеренно: правки процесса и `docs/` без change
+коммитятся прямо в `main` (`AGENTS.md`). GitHub такой push пропустит, но
+включать строгий режим стоит, только если решено проводить их через PR — иначе
+защита блокирует собственный процесс.
+
+Проверить настройки: `gh api repos/tuch-ka/muzifikator/branches/main/protection`.
 
 ## Диагностика
 
