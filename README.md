@@ -47,8 +47,9 @@ uv run muzifikator
 curl -s http://127.0.0.1:8000/api/health
 ```
 
-Настройки — переменными окружения `HOST`, `PORT`, `LOG_LEVEL`, `FFMPEG_BIN`,
-`FFPROBE_BIN` или локальным `.env`. Подробности, включая типовые ошибки, —
+Настройки — переменными окружения `HOST`, `PORT`, `LOG_LEVEL`, `DB_PATH`,
+`FFMPEG_BIN`, `FFPROBE_BIN` или локальным `.env`. База по умолчанию —
+`data/muzifikator.sqlite3`, схема обновляется при старте. Подробности, включая типовые ошибки, —
 в `docs/operations.md`.
 
 ## Статус

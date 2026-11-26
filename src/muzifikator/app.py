@@ -7,6 +7,8 @@ from importlib import metadata
 from typing import Any
 
 from fastapi import FastAPI
+from sqlalchemy import Engine
+from sqlalchemy.orm import Session, sessionmaker
 
 from .preflight import PreflightResult
 
@@ -21,10 +23,17 @@ def app_version() -> str:
         return "unknown"
 
 
-def create_app(preflight: PreflightResult) -> FastAPI:
-    """Создать приложение с уже готовым снимком preflight."""
+def create_app(
+    preflight: PreflightResult,
+    *,
+    engine: Engine | None = None,
+    session_factory: sessionmaker[Session] | None = None,
+) -> FastAPI:
+    """Создать приложение с уже готовым снимком preflight и хранилищем."""
     app = FastAPI(title="muzifikator", version=app_version())
     app.state.preflight = preflight
+    app.state.engine = engine
+    app.state.session_factory = session_factory
 
     @app.get("/api/health")
     def health() -> dict[str, Any]:

@@ -17,5 +17,6 @@ class Settings(BaseSettings):
     host: str = "127.0.0.1"
     port: int = 8000
     log_level: str = "INFO"
+    db_path: Path = Path("data/muzifikator.sqlite3")
     ffmpeg_bin: Path | None = None
     ffprobe_bin: Path | None = None

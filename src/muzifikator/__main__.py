@@ -1,4 +1,4 @@
-"""Точка входа: настройки, логирование, preflight, сервер."""
+"""Точка входа: настройки, логирование, preflight, хранилище, сервер."""
 
 from __future__ import annotations
 
@@ -11,6 +11,7 @@ from .app import create_app
 from .config import Settings
 from .logging_setup import configure_logging
 from .preflight import format_failure, run_preflight
+from .storage import StorageError, create_session_factory, init_storage
 
 log = logging.getLogger("muzifikator")
 
@@ -21,7 +22,7 @@ muzifikator — озвучка текста поверх локально сге
   uv run muzifikator
 
 Окружение:
-  HOST, PORT, LOG_LEVEL, FFMPEG_BIN, FFPROBE_BIN
+  HOST, PORT, LOG_LEVEL, DB_PATH, FFMPEG_BIN, FFPROBE_BIN
   (значения можно положить в локальный .env)
 
 Состояние сервиса:
@@ -49,7 +50,21 @@ def main(argv: list[str] | None = None) -> int:
         print(format_failure(result), file=sys.stderr, flush=True)
         return 1
 
-    app = create_app(result)
+    try:
+        engine = init_storage(settings)
+    except StorageError as exc:
+        print(
+            f"Не удалось открыть хранилище {settings.db_path}: {exc}",
+            file=sys.stderr,
+            flush=True,
+        )
+        return 1
+
+    app = create_app(
+        result,
+        engine=engine,
+        session_factory=create_session_factory(engine),
+    )
     uvicorn.run(app, host=settings.host, port=settings.port, log_config=None)
     return 0
 

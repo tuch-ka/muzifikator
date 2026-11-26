@@ -10,8 +10,10 @@ flowchart LR
     subgraph START["запуск процесса"]
         direction TB
         CFG["конфиг<br/>окружение + .env"] --> PF["preflight<br/>ffmpeg, ffprobe"]
-        PF -->|"ок"| APP["uvicorn"]
+        PF -->|"ок"| ST["storage init<br/>каталог + upgrade head"]
         PF -->|"ошибка"| EXIT["сообщение + exit 1"]
+        ST -->|"ок"| APP["uvicorn"]
+        ST -->|"ошибка"| EXIT
     end
     UI["Web UI<br/>static HTML + JS"] --> API["FastAPI"]
     OPS["curl /health"] --> API
@@ -21,13 +23,14 @@ flowchart LR
     JOB --> MIX["ffmpeg<br/>mix, ducking, fades"]
     MIX --> OUT["выходной каталог<br/>файловая система"]
     API --> DB[("SQLite<br/>generations, settings")]
+    ST --- DB
     MUS --> MODELS[("models/")]
     TTS --> CACHE[(".cache/tts")]
     PF -.->|"снимок версий"| API
 ```
 
-Сейчас реализован только левый блок: конфиг, preflight и `GET /api/health`.
-Остальные компоненты — план последующих фаз.
+Сейчас реализованы конфиг, preflight, инициализация хранилища (миграции,
+`storage/`) и `GET /api/health`. Остальные компоненты — план последующих фаз.
 
 ## Поток генерации
 
@@ -61,6 +64,10 @@ sequenceDiagram
   процесс завершается с кодом 1, сервиса нет.
 - Снимок preflight неизменяем и кладётся в состояние приложения; health его
   только сериализует, внешние процессы на запросах не запускаются.
+- Хранилище — SQLite с WAL, синхронный SQLAlchemy 2.0; схема приводится к
+  последней ревизии Alembic при старте, `create_all` не используется.
+- Время в базе — naive UTC, на границе слоя превращается в aware-UTC
+  (`UTCDateTime`); коммит транзакций — на вызывающей стороне.
 - Одна модель MusicGen в памяти, одна генерация одновременно.
 - Окно модели — 30 с; длиннее — сегменты с кроссфейдом.
 - На MPS считается в `float32`; CPU-режим возможен, но медленный.
