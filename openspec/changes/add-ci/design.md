@@ -152,7 +152,9 @@ openspec list --json | jq -r '.changes[].name' | xargs -r -n1 openspec validate 
 ### 8. Сборка и установка wheel
 
 `uv build` → `uv venv .wheelcheck` → `uv pip install --python .wheelcheck/bin/python
-dist/*.whl` → `.wheelcheck/bin/python -c "import muzifikator"`.
+--no-deps dist/*.whl` → `.wheelcheck/bin/python -c "import muzifikator"`.
+`--no-deps` важен: без него uv потянул бы `torch` и свёл на нет лёгкий CI;
+зависимости к этому шагу уже проверены `uv sync --locked`.
 
 Почему отдельное окружение: проверяется, что пакет ставится и импортируется сам
 по себе, без исходников и без лишних зависимостей. Полный импорт `muzifikator`

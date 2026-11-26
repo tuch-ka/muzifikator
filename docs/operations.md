@@ -157,6 +157,21 @@ ls models/                             # что скачано
 | Ошибка «не хватило памяти» при генерации | MPS не тянет сегмент | Уменьшить длительность, закрыть лишнее или поставить `MUSIC_DEVICE=cpu` |
 | Генерация идёт очень долго | Работа на CPU или тяжёлая модель | Проверить `MUSIC_DEVICE`, вернуться к `musicgen-small` |
 
+## Проверки перед PR
+
+То же, что делает CI (подробности — `docs/ci.md`):
+
+```
+uv run ruff check .
+uv run ruff format --check .
+uv run mypy
+uv run pytest
+openspec validate --specs
+```
+
+Модельные и сетевые тесты локально: `uv run pytest -m model` и
+`uv run pytest -m network`; в CI они не идут.
+
 ## Каталоги
 
 `models/`, `data/`, `logs/`, `.cache/`, `out/`, `.tools/` — вне репозитория

@@ -6,6 +6,7 @@ import uuid
 from datetime import UTC, datetime
 
 from sqlalchemy import CheckConstraint, DateTime, Float, Index, Integer, String, Text
+from sqlalchemy.engine import Dialect
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 from sqlalchemy.types import TypeDecorator
 
@@ -24,7 +25,7 @@ def new_id() -> str:
     return uuid.uuid4().hex
 
 
-class UTCDateTime(TypeDecorator):
+class UTCDateTime(TypeDecorator[datetime]):
     """Хранит наивное UTC, читает aware-UTC.
 
     SQLite не сохраняет смещение, поэтому зона приводится на границе слоя.
@@ -33,14 +34,14 @@ class UTCDateTime(TypeDecorator):
     impl = DateTime
     cache_ok = True
 
-    def process_bind_param(self, value: datetime | None, dialect) -> datetime | None:
+    def process_bind_param(self, value: datetime | None, dialect: Dialect) -> datetime | None:
         if value is None:
             return None
         if value.tzinfo is None:
             raise ValueError("UTCDateTime принимает только aware datetime")
         return value.astimezone(UTC).replace(tzinfo=None)
 
-    def process_result_value(self, value: datetime | None, dialect) -> datetime | None:
+    def process_result_value(self, value: datetime | None, dialect: Dialect) -> datetime | None:
         if value is None:
             return None
         return value.replace(tzinfo=UTC)

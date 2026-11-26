@@ -1,0 +1,71 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  checks:
+    name: checks
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+
+      - name: Install dependencies without torch
+        run: uv sync --locked --no-install-package torch --no-install-package transformers
+
+      - name: Install ffmpeg
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ffmpeg
+          ffmpeg -version | head -n 1
+          ffprobe -version | head -n 1
+
+      - name: Lint
+        run: uv run --no-sync ruff check .
+
+      - name: Format
+        run: uv run --no-sync ruff format --check .
+
+      - name: Types
+        run: uv run --no-sync mypy
+
+      - name: Tests
+        run: uv run --no-sync pytest
+
+      - name: Set up Node for OpenSpec
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Validate specs
+        run: |
+          npm install -g @fission-ai/openspec@2.1.1
+          openspec validate --specs
+          openspec list --json | jq -r '.changes[].name' | xargs -r -n1 openspec validate --strict
+
+      - name: Build wheel
+        run: uv build
+
+      - name: Check wheel installs
+        run: |
+          uv venv .wheelcheck
+          uv pip install --python .wheelcheck/bin/python --no-deps dist/*.whl
+          .wheelcheck/bin/python -c "import muzifikator"

@@ -55,6 +55,17 @@ curl -s http://127.0.0.1:8000/api/health
 `models/` (~2,2 ГБ, скачиваются при первом запуске). Подробности, включая типовые ошибки, —
 в `docs/operations.md`.
 
+## Проверки
+
+```
+uv run ruff check .
+uv run ruff format --check .
+uv run mypy
+uv run pytest
+```
+
+Те же шаги выполняет GitHub Actions на каждый PR; подробности — в `docs/ci.md`.
+
 ## Статус
 
 Проект в разработке. План и задачи — в OpenSpec change.
