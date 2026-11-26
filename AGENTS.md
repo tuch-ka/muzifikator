@@ -27,7 +27,7 @@
 коммит change начинается с ключа задачи: `MUZ-<issue>: <тип>: <итог>`.
 
 - **approve plan** → в ветке коммит
-  `MUZ-<issue>: docs(openspec): plan <phase> <change>` с каталогом
+  `MUZ-<issue>: docs(openspec): plan <change>` с каталогом
   `openspec/changes/<change>/` (proposal, integrations, specs, design, doc,
   tasks). Пуш не делается.
 - **approve apply** → коммитов нет. Код, тесты и правки `docs/` копятся в
